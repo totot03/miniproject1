@@ -1,0 +1,36 @@
+# 환경 변수 (.env.example만 커밋)
+.env*
+!.env.example
+
+# 백엔드 (Maven) — mvnw / .mvn/ 은 반드시 추적한다
+miniproject1-backend/target/
+
+# 프론트엔드 (Next.js)
+miniproject1-frontend/node_modules/
+miniproject1-frontend/.next/
+miniproject1-frontend/out/
+
+# 업로드 파일 (런타임 산출물, T-27 영수증 업로드 등)
+uploads/
+
+# 시드 생성 도구 (Python)
+tools/seed-generator/__pycache__/
+tools/seed-generator/*.pyc
+tools/seed-generator/.venv/
+
+# IDE / 워크스페이스 메타데이터 (Eclipse STS)
+# miniproject1-backend, miniproject1-frontend 하위의 .classpath/.project/.settings 등은
+# 각 모듈 자체 .gitignore가 처리하므로 여기서는 루트 워크스페이스 산출물만 다룬다.
+.metadata/
+
+# Claude Code 로컬 산출물
+.claude/plans/
+.claude/settings.local.json
+
+# MCP 로컬 설정 (경로가 로컬 환경에 하드코딩돼 팀원 간 공유 불가) 및 태스크 매니저 런타임 데이터
+.mcp.json
+shrimp_data/
+
+# OS
+.DS_Store
+Thumbs.db
