@@ -68,6 +68,13 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!-- Spring Boot 4 부터 Flyway 자동설정이 spring-boot-autoconfigure 에서
+		     spring-boot-flyway 모듈로 분리됐다. 이 의존성이 없으면 flyway-core 가
+		     클래스패스에 있어도 마이그레이션이 에러 없이 조용히 실행되지 않는다. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-flyway</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
