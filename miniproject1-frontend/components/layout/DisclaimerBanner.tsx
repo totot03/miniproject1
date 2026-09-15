@@ -8,12 +8,14 @@ import { TriangleAlert } from "lucide-react";
  * 루트 레이아웃에 두어 모든 페이지에 노출되게 한다.
  *
  * sticky로 두어 검색 결과를 스크롤하는 동안에도 계속 보인다.
+ * 배경(--notice)은 반드시 불투명해야 한다 — 알파를 주면 스크롤되는 본문
+ * 텍스트가 배너를 통과해 두 겹으로 겹쳐 읽힌다.
  */
 export function DisclaimerBanner() {
   return (
     <div
       role="note"
-      className="bg-stale/15 text-foreground border-stale/30 sticky top-0 z-40 border-b"
+      className="bg-notice text-foreground border-notice-border sticky top-0 z-40 border-b"
     >
       <p className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2 text-xs leading-relaxed sm:text-sm">
         <TriangleAlert

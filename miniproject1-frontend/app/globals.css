@@ -21,6 +21,8 @@
   --color-price-lowest: var(--price-lowest);
   --color-saving: var(--saving);
   --color-stale: var(--stale);
+  --color-notice: var(--notice);
+  --color-notice-border: var(--notice-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -98,6 +100,12 @@
   --price-lowest: oklch(0.52 0.14 150); /* 최저가 강조 */
   --saving: oklch(0.52 0.14 150); /* 평균 대비 절감액 */
   --stale: oklch(0.62 0.13 75); /* 30일 초과 오래된 제보 경고 */
+
+  /* 고지 배너 배경.
+     배너가 sticky이므로 반드시 불투명해야 한다. 알파를 주면 스크롤되는
+     본문 텍스트가 배너를 통과해 두 겹으로 겹쳐 읽힌다. */
+  --notice: oklch(0.965 0.03 85);
+  --notice-border: oklch(0.88 0.06 85);
 }
 
 /* 다크 테마 정의는 남겨두지만 <html>에 dark 클래스를 붙이지 않는다.
@@ -139,6 +147,8 @@
   --price-lowest: oklch(0.72 0.15 150);
   --saving: oklch(0.72 0.15 150);
   --stale: oklch(0.78 0.14 75);
+  --notice: oklch(0.29 0.04 85);
+  --notice-border: oklch(0.42 0.06 85);
 }
 
 @layer base {
