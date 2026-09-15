@@ -1,10 +1,10 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 
-import { makeStore, type AppStore } from "@/lib/store";
+import { makeStore } from "@/lib/store";
 
 /**
  * 클라이언트 상태 도구 두 개를 세운다.
@@ -18,11 +18,13 @@ import { makeStore, type AppStore } from "@/lib/store";
 export function Providers({ children }: { children: ReactNode }) {
   // 스토어와 QueryClient를 모듈 스코프에서 만들면 서버 프로세스가
   // 모든 요청에 같은 인스턴스를 쓴다. 사용자 A의 캐시가 B에게 보이는
-  // 문제가 되므로 반드시 렌더 단위로 만든다.
-  const storeRef = useRef<AppStore | null>(null);
-  if (storeRef.current === null) {
-    storeRef.current = makeStore();
-  }
+  // 문제가 되므로 반드시 마운트 단위로 만든다.
+  //
+  // Redux 공식 문서는 useRef를 안내하지만, React Compiler 규칙
+  // (react-hooks/refs)이 렌더 중 ref.current 읽기를 금지한다.
+  // useState 초기화 함수는 마운트당 한 번만 실행되므로 의미가 같고
+  // 규칙에도 맞는다.
+  const [store] = useState(makeStore);
 
   const [queryClient] = useState(
     () =>
@@ -37,7 +39,7 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <ReduxProvider store={storeRef.current}>
+    <ReduxProvider store={store}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     </ReduxProvider>
   );
