@@ -2,7 +2,31 @@
 
 동네 약국의 일반의약품 가격을 검색·비교하는 미니 프로젝트다. 상세 요구사항은 [docs/PRD.md](./docs/PRD.md), DB 설계는 [docs/DATABASE.md](./docs/DATABASE.md), 작업 계획은 [docs/ROADMAP.md](./docs/ROADMAP.md)를 참고한다.
 
-> 이 문서는 아직 "로컬 환경 준비" 절만 채워진 상태다. 프로젝트 개요·실행 방법 등 나머지 절은 `docs/ROADMAP.md`의 T-37(마감) 단계에서 보완할 예정이다.
+> 이 문서는 아직 "개발 컨벤션"·"로컬 환경 준비" 절만 채워진 상태다. 프로젝트 개요·실행 방법 등 나머지 절은 `docs/ROADMAP.md`의 T-37(마감) 단계에서 보완할 예정이다.
+
+---
+
+## 개발 컨벤션
+
+### 브랜치
+
+`feature/기능명`, `fix/버그명`, `dev/개발명`, `hotfix/수정명`
+
+### 커밋 메시지
+
+`<type>(<태스크번호>): <설명>` 형식을 쓴다. 태스크 번호는 [docs/ROADMAP.md](./docs/ROADMAP.md)의 `T-xx`를 그대로 쓰고, 작은 단위로 나눠 커밋한다.
+
+예: `feat(T-09): 거리 계산 컴포넌트 추가`
+
+`type`: `feat` / `fix` / `docs` / `chore` / `test` / `refactor`
+
+### 코드 스타일
+
+`.editorconfig`로 강제한다 — Java 4칸 들여쓰기, TS/JS 2칸, LF, UTF-8, 파일 끝 개행.
+
+### 문서 구조에 대한 예외
+
+[docs/ROADMAP.md](./docs/ROADMAP.md)의 T-01 원안은 `PRD.md`·`DATABASE.md`·`API.md`·`ROADMAP.md` 4종을 저장소 루트에 평평하게 두는 것이었다. 이 프로젝트는 코드 모듈(`miniproject1-frontend/`, `miniproject1-backend/`, `tools/`)과 문서를 시각적으로 분리하기 위해 `docs/` 폴더 아래 유지하기로 했다. 이후 문서나 태스크 카드에서 `PRD.md`처럼 루트 상대경로로 언급되는 부분은 전부 `docs/` 하위로 읽는다.
 
 ---
 
