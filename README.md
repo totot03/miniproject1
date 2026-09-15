@@ -24,6 +24,21 @@
 
 `.editorconfig`로 강제한다 — Java 4칸 들여쓰기, TS/JS 2칸, LF, UTF-8, 파일 끝 개행.
 
+### 줄바꿈
+
+`.gitattributes`가 저장소 차원에서 LF로 고정한다 (Windows 배치 파일 `*.bat`/`*.cmd`만 CRLF).
+
+Windows의 git은 보통 `core.autocrlf = true`로 설치되어 체크아웃 시 텍스트 파일을 CRLF로 바꾼다. 그러면 에디터는 `.editorconfig`에 따라 LF로 저장하고 git은 CRLF를 기대해, 줄바꿈만 바뀐 diff가 끝없이 생긴다.
+
+`.gitattributes`의 `eol` 지정은 `core.autocrlf`보다 우선하므로 **각자 로컬에서 `core.autocrlf`를 손댈 필요가 없다.** 파일 하나로 팀원 모두의 동작이 같아진다.
+
+이미 잘못된 줄바꿈으로 체크아웃된 상태라면 한 번 재정규화한다.
+
+```bash
+git add --renormalize .
+git status          # 변경된 파일이 없으면 이미 정상이다
+```
+
 ### 문서 구조에 대한 예외
 
 [docs/ROADMAP.md](./docs/ROADMAP.md)의 T-01 원안은 `PRD.md`·`DATABASE.md`·`API.md`·`ROADMAP.md` 4종을 저장소 루트에 평평하게 두는 것이었다. 이 프로젝트는 코드 모듈(`miniproject1-frontend/`, `miniproject1-backend/`, `tools/`)과 문서를 시각적으로 분리하기 위해 `docs/` 폴더 아래 유지하기로 했다. 이후 문서나 태스크 카드에서 `PRD.md`처럼 루트 상대경로로 언급되는 부분은 전부 `docs/` 하위로 읽는다.

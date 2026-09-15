@@ -1,0 +1,47 @@
+# 줄바꿈 정규화
+#
+# .editorconfig가 end_of_line = lf를 선언하는데, Windows의 git은 보통
+# core.autocrlf = true로 설치돼 체크아웃 시 텍스트 파일을 CRLF로 바꾼다.
+# 그러면 에디터는 LF로 저장하고 git은 CRLF를 기대해 줄바꿈만 바뀐 diff가
+# 끝없이 생긴다.
+#
+# .gitattributes의 eol 지정은 core.autocrlf보다 우선한다. 즉 이 파일 하나로
+# 팀원 각자의 git 설정과 무관하게 동작이 고정된다 — 각 로컬에서
+# core.autocrlf를 끌 필요가 없다.
+
+# 기본: 텍스트 파일은 저장소에 LF로 저장하고 LF로 체크아웃한다.
+# text=auto는 바이너리를 자동 판별해 건드리지 않는다.
+* text=auto eol=lf
+
+# Windows 배치 파일은 CRLF여야 한다. CMD가 LF 스크립트를 제대로 해석하지
+# 못하는 경우가 있다. .editorconfig의 [*.{bat,cmd}] 규칙과 일치시킨다.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 셸 스크립트는 반드시 LF다. CRLF면 실행 시 "bad interpreter" 에러가 난다.
+*.sh text eol=lf
+mvnw text eol=lf
+
+# SQL 마이그레이션(T-05 이후)과 시드 데이터(T-07 이후)도 LF로 고정한다.
+*.sql text eol=lf
+*.csv text eol=lf
+*.py text eol=lf
+
+# 바이너리 — diff·머지·줄바꿈 변환 대상에서 제외한다.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.zip binary
+
+# 생성 파일 — GitHub 차이 보기에서 접고 언어 통계에서 제외한다.
+package-lock.json linguist-generated=true
+miniproject1-frontend/types/api.ts linguist-generated=true
