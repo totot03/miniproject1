@@ -30,10 +30,26 @@ function mockResponse(options: {
   return { res, json };
 }
 
+/**
+ * typeof fetch로 시그니처를 명시한다. vi.fn(async () => ...)로 두면
+ * 인자 없는 함수로 추론돼 mock.calls 인덱싱이 타입 에러가 난다.
+ */
 function stubFetch(res: unknown) {
-  const fetchMock = vi.fn(async () => res as Response);
+  const fetchMock = vi.fn<typeof fetch>(async () => res as Response);
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
+}
+
+type FetchMock = ReturnType<typeof stubFetch>;
+
+/** 첫 호출에 넘어간 요청 URL */
+function requestedUrl(fetchMock: FetchMock): string {
+  return String(fetchMock.mock.calls[0]?.[0]);
+}
+
+/** 첫 호출에 넘어간 요청 헤더 */
+function requestedHeaders(fetchMock: FetchMock): Headers {
+  return new Headers(fetchMock.mock.calls[0]?.[1]?.headers);
 }
 
 afterEach(() => {
@@ -52,9 +68,7 @@ describe("apiFetch", () => {
     expect(result).toEqual(body);
     expect(fetchMock).toHaveBeenCalledOnce();
     // NEXT_PUBLIC_API_BASE_URL이 없어도 기본값으로 절대 URL이 만들어진다
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "http://localhost:8080/api/v1/drugs/1",
-    );
+    expect(requestedUrl(fetchMock)).toBe("http://localhost:8080/api/v1/drugs/1");
   });
 
   it("JSON 에러 바디를 ApiError로 변환한다", async () => {
@@ -137,8 +151,9 @@ describe("apiFetch 헤더 처리", () => {
       body: JSON.stringify({ price: 2800 }),
     });
 
-    const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("Content-Type")).toBe("application/json");
+    expect(requestedHeaders(fetchMock).get("Content-Type")).toBe(
+      "application/json",
+    );
   });
 
   it("FormData 본문에는 Content-Type을 붙이지 않는다", async () => {
@@ -150,9 +165,8 @@ describe("apiFetch 헤더 처리", () => {
       body: new FormData(),
     });
 
-    const headers = fetchMock.mock.calls[0][1].headers as Headers;
     // boundary를 브라우저가 직접 넣어야 하므로 비워둬야 한다
-    expect(headers.get("Content-Type")).toBeNull();
+    expect(requestedHeaders(fetchMock).get("Content-Type")).toBeNull();
   });
 
   it("auth: true이고 토큰이 있으면 Authorization 헤더를 붙인다", async () => {
@@ -162,8 +176,9 @@ describe("apiFetch 헤더 처리", () => {
 
     await apiFetch("/api/v1/auth/me", { auth: true });
 
-    const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("Authorization")).toBe("Bearer test-access-token");
+    expect(requestedHeaders(fetchMock).get("Authorization")).toBe(
+      "Bearer test-access-token",
+    );
   });
 
   it("토큰이 없으면 auth: true라도 Authorization 헤더가 없다", async () => {
@@ -172,7 +187,6 @@ describe("apiFetch 헤더 처리", () => {
 
     await apiFetch("/api/v1/auth/me", { auth: true });
 
-    const headers = fetchMock.mock.calls[0][1].headers as Headers;
-    expect(headers.get("Authorization")).toBeNull();
+    expect(requestedHeaders(fetchMock).get("Authorization")).toBeNull();
   });
 });

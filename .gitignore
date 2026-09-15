@@ -31,6 +31,9 @@ tools/seed-generator/.venv/
 .mcp.json
 shrimp_data/
 
+# Playwright MCP가 저장소 안에 쓰는 스냅샷·스크린샷·콘솔 로그
+.playwright-mcp/
+
 # OS
 .DS_Store
 Thumbs.db
