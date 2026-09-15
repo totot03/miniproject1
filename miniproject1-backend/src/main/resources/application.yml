@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: miniProject1-backend
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:pharmaprice}
+    username: ${POSTGRES_USER:pharmaprice}
+    password: ${POSTGRES_PASSWORD:changeme}
+  jpa:
+    hibernate:
+      ddl-auto: validate       # update/create 절대 금지
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Seoul
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  upload-dir: ${UPLOAD_DIR:./uploads}
+
+recommendation:
+  weights:
+    price: 0.60
+    distance: 0.25
+    freshness: 0.15
+  freshness-half-life-days: 30
+  price-window-days: 90
+  price-window-fallback-days: 180
+  outlier:
+    iqr-multiplier: 1.5
+    min-samples: 4
