@@ -8,7 +8,7 @@ docs/ROADMAP.md T-07 참고. 이 스크립트는 런타임 백엔드가 호출�
 만들어내는 오프라인 도구다.
 
 데이터 소스 (T-07 계획 문서에서 확정한 결정):
-    - 약국   : 심평원 병원정보서비스 OpenAPI(getHospBasisList) — 좌표(XPos/YPos) 포함
+    - 약국   : 심평원 약국정보서비스 OpenAPI(getParmacyBasisList) — 좌표(XPos/YPos) 포함
     - 의약품 : data/drug_master.csv 수작업 목록 (30~50종)
     - 행정구역: 별도 데이터셋 없이 약국 응답의 시도/시군구 코드를 그대로 region 으로 구성
 
@@ -17,13 +17,14 @@ docs/ROADMAP.md T-07 참고. 이 스크립트는 런타임 백엔드가 호출�
     python build_master_seed.py --skip-fetch    # data/pharmacy_raw.csv 를 재사용 (서비스키 불필요)
 
 환경변수 (.env, .env.example 참고):
-    HIRA_SERVICE_KEY   공공데이터포털에서 발급받은 심평원 병원정보서비스 서비스키(Decoding 값)
+    HIRA_SERVICE_KEY   공공데이터포털에서 발급받은 심평원 약국정보서비스 서비스키(Decoding 값)
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import math
 import os
 import random
@@ -91,7 +92,12 @@ BCRYPT_ROUNDS = 10  # Spring Security BCryptPasswordEncoder() 기본 strength �
 
 @dataclass
 class PharmacyRow:
-    hira_code: str
+    # HIRA 약국정보서비스의 ykiho는 "요양기관기호" 라는 이름과 달리 실제로는 80자
+    # 안팎의 인코딩된 문자열이다(실측: base64 디코드하면 "$481881#51#$1#$8#..." 형태의
+    # 내부 구분자 인코딩). pharmacy.hira_code 컬럼은 VARCHAR(30)이라 원본을 그대로 넣으면
+    # Flyway 마이그레이션이 "값이 너무 길다"로 실패한다. 원본은 여기 보관하고,
+    # DB에 넣을 짧은 키는 hira_code 프로퍼티에서 해시로 만든다.
+    ykiho_raw: str
     name: str
     address_road: Optional[str]
     phone: Optional[str]
@@ -101,6 +107,13 @@ class PharmacyRow:
     sido_name: str
     sigungu_code: str
     sigungu_name: str
+
+    @property
+    def hira_code(self) -> str:
+        # 같은 ykiho_raw는 항상 같은 해시를 내므로 재실행해도 ON CONFLICT(hira_code)
+        # 멱등성이 그대로 유지된다. 24자리 hex(96비트)라 이 규모(1만여 건)에서 충돌 위험은
+        # 무시할 수준이다.
+        return hashlib.sha256(self.ykiho_raw.encode("utf-8")).hexdigest()[:24]
 
     @property
     def region_code(self) -> str:
@@ -188,12 +201,12 @@ def fetch_pharmacies_from_api(service_key: str) -> list[PharmacyRow]:
 def _to_pharmacy_row(item: dict, sido_code: str, sido_name: str) -> Optional[PharmacyRow]:
     # sidoCd/sgguCd 는 JSON에서 숫자로 온다(문자열이 아님) — str() 로 먼저 감싸지 않으면
     # int에 .strip()을 호출해 그대로 죽는다.
-    hira_code = str(item.get("ykiho") or "").strip()
+    ykiho_raw = str(item.get("ykiho") or "").strip()
     lat_raw, lng_raw = item.get("YPos"), item.get("XPos")
     sigungu_code = str(item.get("sgguCd") or "").strip()
     sigungu_name = str(item.get("sgguCdNm") or "").strip()
 
-    if not hira_code:
+    if not ykiho_raw:
         return None  # ON CONFLICT(hira_code) 의 전제 — 코드 없는 행은 멱등성을 깨므로 제외
     if not sigungu_code or not sigungu_name:
         return None
@@ -207,11 +220,13 @@ def _to_pharmacy_row(item: dict, sido_code: str, sido_name: str) -> Optional[Pha
     if not (33 <= lat <= 39 and 124 <= lng <= 132):
         return None
 
+    # 이 API는 문자열처럼 보이는 필드도 종종 숫자로 내려준다(관측: 전화번호가 하이픈 없이
+    # 숫자만 있으면 telno가 int로 옴). 문자열 필드는 전부 str()로 감싸 방어한다.
     return PharmacyRow(
-        hira_code=hira_code,
-        name=(item.get("yadmNm") or "").strip(),
-        address_road=(item.get("addr") or "").strip() or None,
-        phone=(item.get("telno") or "").strip() or None,
+        ykiho_raw=ykiho_raw,
+        name=str(item.get("yadmNm") or "").strip(),
+        address_road=str(item.get("addr") or "").strip() or None,
+        phone=str(item.get("telno") or "").strip() or None,
         lat=lat,
         lng=lng,
         sido_code=sido_code,
@@ -226,12 +241,12 @@ def save_pharmacy_raw_csv(rows: list[PharmacyRow], path: Path) -> None:
     with path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(
-            ["hira_code", "name", "address_road", "phone", "lat", "lng",
+            ["ykiho_raw", "name", "address_road", "phone", "lat", "lng",
              "sido_code", "sido_name", "sigungu_code", "sigungu_name"]
         )
         for r in rows:
             writer.writerow(
-                [r.hira_code, r.name, r.address_road or "", r.phone or "",
+                [r.ykiho_raw, r.name, r.address_road or "", r.phone or "",
                  r.lat, r.lng, r.sido_code, r.sido_name, r.sigungu_code, r.sigungu_name]
             )
     print(f"원본 약국 데이터 저장: {path} ({len(rows)}행)")
@@ -247,7 +262,7 @@ def load_pharmacy_raw_csv(path: Path) -> list[PharmacyRow]:
         for rec in csv.DictReader(f):
             rows.append(
                 PharmacyRow(
-                    hira_code=rec["hira_code"],
+                    ykiho_raw=rec["ykiho_raw"],
                     name=rec["name"],
                     address_road=rec["address_road"] or None,
                     phone=rec["phone"] or None,
@@ -540,7 +555,7 @@ def main() -> None:
                 "[오류] HIRA_SERVICE_KEY 가 설정되지 않았다. tools/seed-generator/.env 를 만들거나 "
                 "--skip-fetch 로 캐시된 데이터를 재사용할 것."
             )
-        print("HIRA 병원정보서비스 API 호출 중 (서울·경기)...")
+        print("HIRA 약국정보서비스 API 호출 중 (서울·경기)...")
         pharmacies_all = fetch_pharmacies_from_api(service_key)
         save_pharmacy_raw_csv(pharmacies_all, args.pharmacy_raw)
 
