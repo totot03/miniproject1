@@ -1,0 +1,19 @@
+# 통합 테스트 전용 설정.
+# Docker 가 없어 Testcontainers 를 쓸 수 없으므로, 이미 준비된
+# 빈 pharmaprice_test DB 에 직접 접속한다 (docs/ROADMAP.md T-06 메모의 폴백 경로).
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/pharmaprice_test
+    username: ${POSTGRES_USER:pharmaprice}
+    password: ${POSTGRES_PASSWORD:changeme}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Seoul
+  flyway:
+    enabled: true          # 비어 있는 pharmaprice_test 에 V1 을 자동 적용한다
+    locations: classpath:db/migration
