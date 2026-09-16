@@ -8,6 +8,11 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
  * 이 슬라이스는 "마지막으로 취득한 위치"를 기억해 검색 링크를 만들 때 쓴다.
  *
  * 실제 위치 취득(navigator.geolocation)과 시·군·구 폴백은 T-16에서 채운다.
+ *
+ * 이 슬라이스는 "확정된" 위치만 담는다. GPS 요청 중/거부/타임아웃 같은
+ * 일시적 진행 상태는 hooks/useUserLocation.ts가 로컬 상태로만 관리하고
+ * Redux에는 올리지 않는다 — 다른 화면은 "지금 요청 중인지"를 알 필요가
+ * 없고, 최종적으로 확정된 좌표만 알면 된다.
  */
 
 /** 좌표 출처. docs/API.md §5 query.locationSource와 같은 값 */
@@ -50,8 +55,30 @@ const locationSlice = createSlice({
       state.source = "GPS";
       state.error = null;
     },
+    /** 위치 권한 거부·실패 시 RegionPicker에서 고른 시·군·구 폴백 좌표를 반영한다 (T-16) */
+    setRegionFallback(
+      state,
+      action: PayloadAction<{
+        lat: number;
+        lng: number;
+        regionCode: string;
+        label: string;
+      }>,
+    ) {
+      state.lat = action.payload.lat;
+      state.lng = action.payload.lng;
+      state.regionCode = action.payload.regionCode;
+      state.label = action.payload.label;
+      state.source = "REGION";
+      state.error = null;
+    },
+    /** 헤더의 "위치 재설정"에서 호출한다. 확정 상태를 비워 다시 GPS 요청/RegionPicker로 돌아간다 (T-16) */
+    clearLocation() {
+      return initialState;
+    },
   },
 });
 
-export const { setCoordinates } = locationSlice.actions;
+export const { setCoordinates, setRegionFallback, clearLocation } =
+  locationSlice.actions;
 export default locationSlice.reducer;
