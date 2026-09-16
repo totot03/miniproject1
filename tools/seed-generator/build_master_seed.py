@@ -57,11 +57,17 @@ DEFAULT_OUTPUT = (
     / "V2__seed_master.sql"
 )
 
-# HIRA 병원정보서비스 OpenAPI. data.go.kr id 15001698.
-# ⚠️ 엔드포인트 경로·파라미터명은 활용신청 후 받는 "활용가이드" 문서 기준으로
-#    실제 응답을 한 번 찍어보고(--debug-raw) 확정할 것. 아래는 통용되는 v2 스펙 기준이다.
-HIRA_ENDPOINT = "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList1"
-SIDO_CODES = {"11": "서울특별시", "41": "경기도"}
+# HIRA 약국정보서비스 OpenAPI. data.go.kr id 15001673 (제공기관 B551182).
+# ⚠️ "Parmacy"는 오탈자가 아니라 HIRA가 실제로 쓰는 오퍼레이션명이다.
+# 아래 값들은 실제 API를 호출해 확인한 것이다 (병원정보서비스(15001698)의 hospInfoServicev2
+# 와는 다른 제공기관 세그먼트이므로 별도 활용신청이 필요하다):
+#   - sidoCd 는 법정동코드가 아니라 HIRA 자체 코드다. 서울=110000, 경기=310000
+#     (getHospBasisList 로 실측 — sgguCd 도 앞 2자리에 이 sidoCd 접두어가 그대로 들어있어
+#      전국 유일 키로 쓸 수 있다. 이 API도 같은 제공기관 스키마를 따를 것으로 보고 동일하게 둔다)
+HIRA_ENDPOINT = "https://apis.data.go.kr/B551182/pharmacyInfoService/getParmacyBasisList"
+SIDO_CODES = {"110000": "서울특별시", "310000": "경기도"}
+# 이 API는 처음부터 약국만 응답할 가능성이 높지만(스키마 미확인), 혹시 clCdNm 필드가
+# 있고 다른 종별이 섞여 온다면 방어적으로 필터링한다. 필드가 없으면 조건은 그냥 통과시킨다.
 PHARMACY_CL_CD_NM = "약국"
 
 # T-08 과 동일한 컨벤션 — 재실행해도 항상 같은 표본이 나오게 시드를 고정한다.
@@ -98,7 +104,10 @@ class PharmacyRow:
 
     @property
     def region_code(self) -> str:
-        return f"{self.sido_code.zfill(2)}{self.sigungu_code.zfill(3)}"
+        # sgguCd 는 실측 결과 앞 2자리에 sidoCd 접두어를 이미 포함해 전국적으로 유일하다
+        # (예: 서울 강남구 110001, 경기 가평군 310001). sidoCd 를 따로 이어붙이면
+        # region.code VARCHAR(10)을 넘기므로 sgguCd 단독을 코드로 쓴다.
+        return self.sigungu_code
 
 
 @dataclass
@@ -159,7 +168,10 @@ def fetch_pharmacies_from_api(service_key: str) -> list[PharmacyRow]:
                 item_list = [item_list]
 
             for item in item_list:
-                if item.get("clCdNm") != PHARMACY_CL_CD_NM:
+                # 이 API는 이미 약국만 응답할 가능성이 높다. clCdNm 필드가 있고 값이
+                # '약국'이 아닐 때만 걸러낸다 — 필드가 없다고 전부 버리면 안 된다.
+                cl_cd_nm = item.get("clCdNm")
+                if cl_cd_nm is not None and cl_cd_nm != PHARMACY_CL_CD_NM:
                     continue
                 row = _to_pharmacy_row(item, sido_code, sido_name)
                 if row is not None:
@@ -174,10 +186,12 @@ def fetch_pharmacies_from_api(service_key: str) -> list[PharmacyRow]:
 
 
 def _to_pharmacy_row(item: dict, sido_code: str, sido_name: str) -> Optional[PharmacyRow]:
-    hira_code = (item.get("ykiho") or "").strip()
+    # sidoCd/sgguCd 는 JSON에서 숫자로 온다(문자열이 아님) — str() 로 먼저 감싸지 않으면
+    # int에 .strip()을 호출해 그대로 죽는다.
+    hira_code = str(item.get("ykiho") or "").strip()
     lat_raw, lng_raw = item.get("YPos"), item.get("XPos")
-    sigungu_code = (item.get("sgguCd") or "").strip()
-    sigungu_name = (item.get("sgguCdNm") or "").strip()
+    sigungu_code = str(item.get("sgguCd") or "").strip()
+    sigungu_name = str(item.get("sgguCdNm") or "").strip()
 
     if not hira_code:
         return None  # ON CONFLICT(hira_code) 의 전제 — 코드 없는 행은 멱등성을 깨므로 제외

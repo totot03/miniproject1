@@ -14,7 +14,7 @@
 
 | 대상 | 소스 | 인증 |
 |---|---|---|
-| 약국(`pharmacy`) | 심평원 병원정보서비스 OpenAPI `getHospBasisList` ([data.go.kr id 15001698](https://www.data.go.kr/data/15001698/openapi.do)) | 서비스키 필요 (회원가입 후 활용신청, 자동승인) |
+| 약국(`pharmacy`) | 심평원 **약국정보서비스** OpenAPI `getParmacyBasisList` ([data.go.kr id 15001673](https://www.data.go.kr/data/15001673/openapi.do)) | 서비스키 필요 (회원가입 후 활용신청, 자동승인) |
 | 의약품(`drug`) | `data/drug_master.csv` 수작업 목록 | 불필요 |
 | 행정구역(`region`) | 약국 API 응답의 시도/시군구 코드로 자동 구성 (별도 데이터셋 없음) | 불필요 |
 
