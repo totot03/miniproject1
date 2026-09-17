@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { DistanceBadge } from "@/components/common/DistanceBadge";
@@ -75,56 +77,59 @@ export function PharmacyResultCard({
   const isTopPick = recommended === true || rank === 1;
 
   return (
-    <Card
-      className={cn(
-        isTopPick && "border-primary ring-primary/20 border-2 ring-2",
-        className,
-      )}
-    >
-      <CardContent className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate font-semibold">{pharmacy.name}</h3>
-            {isTopPick ? <Badge>최저가 추천</Badge> : null}
-            {badges.map((badge) => {
-              const meta = BADGE_LABELS[badge];
-              if (!meta) return null;
-              return (
-                <Badge
-                  key={badge}
-                  variant={meta.variant}
-                  className={cn(badge === "STALE_DATA" && "text-stale")}
-                >
-                  {meta.label}
-                </Badge>
-              );
-            })}
+    <Link href={`/pharmacies/${pharmacy.id}`} className="block">
+      <Card
+        className={cn(
+          "hover:bg-muted/30",
+          isTopPick && "border-primary ring-primary/20 border-2 ring-2",
+          className,
+        )}
+      >
+        <CardContent className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="truncate font-semibold">{pharmacy.name}</h3>
+              {isTopPick ? <Badge>최저가 추천</Badge> : null}
+              {badges.map((badge) => {
+                const meta = BADGE_LABELS[badge];
+                if (!meta) return null;
+                return (
+                  <Badge
+                    key={badge}
+                    variant={meta.variant}
+                    className={cn(badge === "STALE_DATA" && "text-stale")}
+                  >
+                    {meta.label}
+                  </Badge>
+                );
+              })}
+            </div>
+            <p className="text-muted-foreground truncate text-sm">
+              {pharmacy.addressRoad}
+            </p>
+            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+              <DistanceBadge meters={distanceM} />
+              <span>제보 {price.reportCount}건</span>
+              <span>{formatRelativeDate(price.lastReportedAt)} 갱신</span>
+            </div>
           </div>
-          <p className="text-muted-foreground truncate text-sm">
-            {pharmacy.addressRoad}
-          </p>
-          <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-            <DistanceBadge meters={distanceM} />
-            <span>제보 {price.reportCount}건</span>
-            <span>{formatRelativeDate(price.lastReportedAt)} 갱신</span>
-          </div>
-        </div>
 
-        <div className="shrink-0 space-y-1 text-right">
-          <PriceTag price={price.repPrice} size="lg" lowest={isTopPick} />
-          {price.minPrice < price.repPrice ? (
-            <p className="text-muted-foreground text-xs">
-              최저 <PriceTag price={price.minPrice} size="sm" />
-            </p>
-          ) : null}
-          {price.savingVsCandidateAvg != null &&
-          price.savingVsCandidateAvg > 0 ? (
-            <p className="text-price-lowest text-xs font-medium">
-              평균보다 {formatNumber(price.savingVsCandidateAvg)}원 저렴
-            </p>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+          <div className="shrink-0 space-y-1 text-right">
+            <PriceTag price={price.repPrice} size="lg" lowest={isTopPick} />
+            {price.minPrice < price.repPrice ? (
+              <p className="text-muted-foreground text-xs">
+                최저 <PriceTag price={price.minPrice} size="sm" />
+              </p>
+            ) : null}
+            {price.savingVsCandidateAvg != null &&
+            price.savingVsCandidateAvg > 0 ? (
+              <p className="text-price-lowest text-xs font-medium">
+                평균보다 {formatNumber(price.savingVsCandidateAvg)}원 저렴
+              </p>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
