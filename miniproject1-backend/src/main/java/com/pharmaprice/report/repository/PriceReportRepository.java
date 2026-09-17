@@ -6,6 +6,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PriceReportRepository extends JpaRepository<PriceReport, Long> {
 
@@ -25,4 +27,18 @@ public interface PriceReportRepository extends JpaRepository<PriceReport, Long> 
      */
     List<PriceReport> findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
         Long pharmacyId, Long drugId, ReportStatus excludedStatus, LocalDate fromDate);
+
+    /**
+     * T-26 이상치 판정 전용. {@code PriceStatRepository.aggregate}와 달리 특정 약국이나
+     * 날짜 윈도우로 좁히지 않고, 그 약품의 전 약국·전 기간 유효 제보(ACTIVE, 미플래그)
+     * 만으로 중앙값을 구한다({@code docs/PRD.md} F2-9). 대상이 0건이면
+     * {@code percentile_cont}가 SQL {@code NULL}을 반환하므로 그대로 {@code null}이
+     * 되고, 이 경우 호출부는 비교할 기준이 없다고 보고 이상치 판정 자체를 건너뛴다.
+     */
+    @Query(value = """
+        SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY price)::int
+        FROM price_report
+        WHERE drug_id = :drugId AND status = 'ACTIVE' AND flagged = false
+        """, nativeQuery = true)
+    Integer findDrugWideMedianPrice(@Param("drugId") Long drugId);
 }

@@ -1,0 +1,12 @@
+package com.pharmaprice.report.exception;
+
+/**
+ * 가격 제보의 {@code purchasedAt}이 미래이거나 오늘로부터 180일을 초과한 과거일 때 던진다.
+ * {@code PriceReportExceptionHandler}가 {@code 400 INVALID_DATE_RANGE}로 변환한다.
+ */
+public class InvalidDateRangeException extends RuntimeException {
+
+    public InvalidDateRangeException(String message) {
+        super(message);
+    }
+}
