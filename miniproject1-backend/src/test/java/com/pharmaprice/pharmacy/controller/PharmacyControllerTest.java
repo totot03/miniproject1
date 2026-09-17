@@ -13,6 +13,8 @@ import com.pharmaprice.common.dto.PageResponse;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse.DrugPriceItem;
 import com.pharmaprice.pharmacy.dto.PharmacySummaryResponse;
+import com.pharmaprice.pharmacy.dto.PriceHistoryResponse;
+import com.pharmaprice.pharmacy.dto.PriceHistoryResponse.PricePoint;
 import com.pharmaprice.pharmacy.dto.RegionInfo;
 import com.pharmaprice.pharmacy.service.PharmacyService;
 import java.time.LocalDate;
@@ -131,5 +133,45 @@ class PharmacyControllerTest {
 
         mockMvc.perform(get("/api/v1/pharmacies/{pharmacyId}", 999L))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void historyReturns200WithApiSpecFieldsIncludingFlaggedPoint() throws Exception {
+        PriceHistoryResponse history = new PriceHistoryResponse(101L, 1L, List.of(
+            new PricePoint(LocalDate.of(2026, 6, 2), 2700, false),
+            new PricePoint(LocalDate.of(2026, 8, 1), 9900, true)));
+        given(pharmacyService.getPriceHistory(eq(101L), eq(1L), any())).willReturn(history);
+
+        mockMvc.perform(get("/api/v1/pharmacies/{pharmacyId}/drugs/{drugId}/history", 101L, 1L))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.pharmacyId").value(101))
+            .andExpect(jsonPath("$.drugId").value(1))
+            .andExpect(jsonPath("$.points[0].purchasedAt").value("2026-06-02"))
+            .andExpect(jsonPath("$.points[0].flagged").value(false))
+            .andExpect(jsonPath("$.points[1].price").value(9900))
+            .andExpect(jsonPath("$.points[1].flagged").value(true));
+    }
+
+    @Test
+    void historyReturns200WithEmptyPointsWhenNoHistory() throws Exception {
+        given(pharmacyService.getPriceHistory(eq(101L), eq(1L), any()))
+            .willReturn(new PriceHistoryResponse(101L, 1L, List.of()));
+
+        mockMvc.perform(get("/api/v1/pharmacies/{pharmacyId}/drugs/{drugId}/history", 101L, 1L))
+            .andExpect(status().isOk()) // 이력 0건이어도 404가 아니라 200
+            .andExpect(jsonPath("$.points").isArray())
+            .andExpect(jsonPath("$.points").isEmpty());
+    }
+
+    @Test
+    void historyDelegatesDaysParamToService() throws Exception {
+        given(pharmacyService.getPriceHistory(eq(101L), eq(1L), eq(30)))
+            .willReturn(new PriceHistoryResponse(101L, 1L, List.of()));
+
+        mockMvc.perform(get("/api/v1/pharmacies/{pharmacyId}/drugs/{drugId}/history", 101L, 1L).param("days", "30"))
+            .andExpect(status().isOk());
+
+        // days 클램프(기본180/최대365)는 서비스 몫 — 컨트롤러는 파라미터를 그대로 전달만 한다.
+        verify(pharmacyService).getPriceHistory(101L, 1L, 30);
     }
 }

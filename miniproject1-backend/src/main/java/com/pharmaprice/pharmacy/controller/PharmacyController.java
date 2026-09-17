@@ -3,6 +3,7 @@ package com.pharmaprice.pharmacy.controller;
 import com.pharmaprice.common.dto.PageResponse;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
 import com.pharmaprice.pharmacy.dto.PharmacySummaryResponse;
+import com.pharmaprice.pharmacy.dto.PriceHistoryResponse;
 import com.pharmaprice.pharmacy.service.PharmacyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,5 +44,15 @@ public class PharmacyController {
         @RequestParam(required = false) Double lng
     ) {
         return pharmacyService.getDetail(pharmacyId, lat, lng);
+    }
+
+    /** {@code docs/API.md} §4 history. days 검증(기본180/최대365 clamp)은 전부 {@link PharmacyService} 몫이다. */
+    @GetMapping("/{pharmacyId}/drugs/{drugId}/history")
+    public PriceHistoryResponse history(
+        @PathVariable Long pharmacyId,
+        @PathVariable Long drugId,
+        @RequestParam(required = false) Integer days
+    ) {
+        return pharmacyService.getPriceHistory(pharmacyId, drugId, days);
     }
 }

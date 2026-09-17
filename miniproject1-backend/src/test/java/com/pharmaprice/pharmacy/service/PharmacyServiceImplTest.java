@@ -16,12 +16,17 @@ import com.pharmaprice.pharmacy.domain.Region;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse.DrugPriceItem;
 import com.pharmaprice.pharmacy.dto.PharmacySummaryResponse;
+import com.pharmaprice.pharmacy.dto.PriceHistoryResponse;
+import com.pharmaprice.pharmacy.dto.PriceHistoryResponse.PricePoint;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.DrugPriceRow;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.PharmacyRow;
 import com.pharmaprice.pharmacy.repository.PharmacyRepository;
 import com.pharmaprice.recommendation.distance.DistanceCalculator;
 import com.pharmaprice.recommendation.distance.HaversineDistanceCalculator;
+import com.pharmaprice.report.domain.PriceReport;
+import com.pharmaprice.report.domain.ReportStatus;
+import com.pharmaprice.report.repository.PriceReportRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -41,12 +46,13 @@ class PharmacyServiceImplTest {
     private final PharmacyQueryRepository pharmacyQueryRepository = mock(PharmacyQueryRepository.class);
     private final PharmacyRepository pharmacyRepository = mock(PharmacyRepository.class);
     private final DistanceCalculator distanceCalculator = new HaversineDistanceCalculator();
+    private final PriceReportRepository priceReportRepository = mock(PriceReportRepository.class);
 
     private PharmacyServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new PharmacyServiceImpl(pharmacyQueryRepository, pharmacyRepository, distanceCalculator);
+        service = new PharmacyServiceImpl(pharmacyQueryRepository, pharmacyRepository, distanceCalculator, priceReportRepository);
     }
 
     private PharmacyRow row(long id, String name, double lat, double lng, String regionCode) {
@@ -164,6 +170,65 @@ class PharmacyServiceImplTest {
         assertThat(detail.drugPrices()).extracting(DrugPriceItem::drugId).containsExactly(1L, 2L);
         assertThat(detail.drugPrices().get(0).diffFromNationalAvg()).isEqualTo(-500); // 2000-2500
         assertThat(detail.drugPrices().get(1).diffFromNationalAvg()).isNull();
+    }
+
+    @Test
+    void getPriceHistoryIncludesFlaggedPointsAndReturnsEmptyWhenNoReports() {
+        PriceReport normal = report(2700, LocalDate.of(2026, 6, 2), false);
+        PriceReport flagged = report(9900, LocalDate.of(2026, 8, 1), true);
+        given(priceReportRepository.findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(101L), eq(1L), eq(ReportStatus.HIDDEN), any(LocalDate.class)))
+            .willReturn(List.of(normal, flagged));
+
+        PriceHistoryResponse withData = service.getPriceHistory(101L, 1L, null);
+
+        assertThat(withData.pharmacyId()).isEqualTo(101L);
+        assertThat(withData.drugId()).isEqualTo(1L);
+        assertThat(withData.points()).extracting(PricePoint::flagged).containsExactly(false, true); // flagged여도 제외되지 않음
+
+        given(priceReportRepository.findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(999L), eq(999L), eq(ReportStatus.HIDDEN), any(LocalDate.class)))
+            .willReturn(List.of());
+
+        PriceHistoryResponse empty = service.getPriceHistory(999L, 999L, null);
+
+        assertThat(empty.points()).isEmpty(); // 0건이어도 예외 없이 빈 리스트 (컨트롤러에서 200으로 응답)
+    }
+
+    @Test
+    void getPriceHistoryExcludesOnlyHiddenStatusAtRepositoryLevel() {
+        // HIDDEN 제외는 derived query의 StatusNot 조건이 DB에서 처리한다 — 서비스는
+        // 필터링하지 않고 excludedStatus 인자로 HIDDEN을 넘기기만 한다. 실제 DB 필터링
+        // 동작(REJECTED/ACTIVE는 포함) 검증은 리포지토리 계층 몫이며, 여기서는 서비스가
+        // 항상 HIDDEN을 넘기는지만 확인한다.
+        given(priceReportRepository.findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            any(), any(), any(), any())).willReturn(List.of());
+
+        service.getPriceHistory(101L, 1L, 30);
+
+        verify(priceReportRepository).findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(101L), eq(1L), eq(ReportStatus.HIDDEN), any(LocalDate.class));
+    }
+
+    @Test
+    void getPriceHistoryClampsDaysToDefaultAndMax() {
+        given(priceReportRepository.findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            any(), any(), any(), any())).willReturn(List.of());
+
+        service.getPriceHistory(101L, 1L, null); // 기본 180일
+        service.getPriceHistory(101L, 1L, 9999); // 최대 365일로 clamp
+        service.getPriceHistory(101L, 1L, 30); // 그대로 30일
+
+        verify(priceReportRepository).findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(101L), eq(1L), eq(ReportStatus.HIDDEN), eq(LocalDate.now().minusDays(180)));
+        verify(priceReportRepository).findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(101L), eq(1L), eq(ReportStatus.HIDDEN), eq(LocalDate.now().minusDays(365)));
+        verify(priceReportRepository).findByPharmacy_IdAndDrug_IdAndStatusNotAndPurchasedAtGreaterThanEqualOrderByPurchasedAtAsc(
+            eq(101L), eq(1L), eq(ReportStatus.HIDDEN), eq(LocalDate.now().minusDays(30)));
+    }
+
+    private PriceReport report(int price, LocalDate purchasedAt, boolean flagged) {
+        return PriceReport.builder().price(price).purchasedAt(purchasedAt).flagged(flagged).build();
     }
 
     private DrugPriceRow drugPriceRow(long drugId, String displayName, int repPrice, Integer nationalAvg) {
