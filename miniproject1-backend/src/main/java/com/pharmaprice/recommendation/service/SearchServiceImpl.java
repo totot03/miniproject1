@@ -47,7 +47,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class SearchServiceImpl implements SearchService {
 
-    /** 검색 반경 단계. {@code HaversineDistanceCalculator}의 허용값과 일치해야 한다. */
+    /**
+     * 검색 반경 단계이자 {@code docs/API.md} §5 허용값. {@code HaversineDistanceCalculator}는
+     * 여러 API가 공유하는 순수 기하 유틸이라 이 enum을 모르므로, 검증은 이 클래스가
+     * 직접 한다({@link #search} 참고).
+     */
     private static final List<Integer> RADIUS_STEPS = List.of(500, 1000, 2000, 5000);
 
     private static final int MAX_LIMIT = 50;
@@ -75,6 +79,12 @@ public class SearchServiceImpl implements SearchService {
             .filter(Drug::isOtcFlag)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "drug not found: " + drugId));
         LocationResolution location = resolveLocation(lat, lng, regionCode);
+        // 허용 안 된 반경 — 범위 밖 좌표와 마찬가지로 400 변환은 T-35 몫이라
+        // 지금은 IllegalArgumentException을 그대로 흘려보낸다.
+        if (!RADIUS_STEPS.contains(radius)) {
+            throw new IllegalArgumentException(
+                "허용되지 않은 반경입니다: " + radius + " (허용값: " + RADIUS_STEPS + ")");
+        }
         SortOption sort = SortOption.from(sortParam);
         int clampedLimit = Math.min(Math.max(limit, 1), MAX_LIMIT);
 

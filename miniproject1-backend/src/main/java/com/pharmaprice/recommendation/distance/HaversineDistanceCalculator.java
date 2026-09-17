@@ -1,6 +1,5 @@
 package com.pharmaprice.recommendation.distance;
 
-import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /**
@@ -10,6 +9,12 @@ import org.springframework.stereotype.Component;
  * 후보를 정사각형 범위로 좁히고, {@link #distanceMeters}(Haversine 공식)로 정확한
  * 거리를 구해 2차 필터링한다({@code docs/DATABASE.md} §4). 두 메서드는 항상 짝으로
  * 쓰여야 한다 — 바운딩 박스만으로는 모서리에 반경 밖 지점이 섞인다.
+ *
+ * <p><b>허용 반경값은 여기서 강제하지 않는다.</b> 이 컴포넌트는 여러 API(T-15
+ * {@code /search}, T-19 {@code /pharmacies})가 공유하는 순수 기하 유틸이고, API마다
+ * 허용하는 반경 규칙이 다르다({@code /search}는 500/1000/2000/5000 고정값,
+ * {@code /pharmacies}는 최대 10000의 임의값 — {@code docs/API.md} §4·§5). 특정 API의
+ * 반경 enum 검증은 그 API의 서비스 계층(예: {@code SearchServiceImpl})이 맡는다.</p>
  */
 @Component
 public class HaversineDistanceCalculator implements DistanceCalculator {
@@ -20,14 +25,10 @@ public class HaversineDistanceCalculator implements DistanceCalculator {
     /** 위도 1도당 실제 거리(미터). 자오선은 거의 원이라 위도·지구 어디서나 거의 일정하다. */
     private static final double METERS_PER_DEGREE_LAT = 111_320.0;
 
-    /** 검색 API가 허용하는 반경(미터) 값. 그 외는 {@code 400 INVALID_RADIUS}(T-35)로 변환된다. */
-    private static final Set<Integer> ALLOWED_RADII_M = Set.of(500, 1000, 2000, 5000);
-
     @Override
     public BoundingBox boundingBox(double lat, double lng, int radiusM) {
-        if (!ALLOWED_RADII_M.contains(radiusM)) {
-            throw new IllegalArgumentException(
-                "허용되지 않은 반경입니다: " + radiusM + " (허용값: " + ALLOWED_RADII_M + ")");
+        if (radiusM <= 0) {
+            throw new IllegalArgumentException("반경은 0보다 커야 합니다: " + radiusM);
         }
         double latDelta = radiusM / METERS_PER_DEGREE_LAT;
         // 경도 1도의 실제 거리는 위도가 높아질수록 cos(위도)배로 줄어든다(위선의 반지름이

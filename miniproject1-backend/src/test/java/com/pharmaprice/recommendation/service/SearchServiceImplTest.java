@@ -113,6 +113,19 @@ class SearchServiceImplTest {
     }
 
     @Test
+    void searchWithDisallowedRadiusThrows() {
+        // boundingBox()는 더 이상 500/1000/2000/5000 제한을 두지 않는다(T-19에서
+        // /pharmacies가 임의 반경을 써야 해 이 검증을 여기로 옮겼다) — 이 서비스가
+        // 직접 검증하는지 확인한다.
+        given(drugRepository.findById(1L)).willReturn(Optional.of(otcDrug(1L, "약품")));
+
+        assertThatThrownBy(() -> service.search(1L, 37.5, 127.0, null, 1500, "SCORE", 20))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.search(1L, 37.5, 127.0, null, 10_000, "SCORE", 20))
+            .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
     void searchWithMissingDrugThrows404() {
         given(drugRepository.findById(999L)).willReturn(Optional.empty());
 

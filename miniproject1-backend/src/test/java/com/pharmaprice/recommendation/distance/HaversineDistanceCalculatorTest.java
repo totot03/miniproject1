@@ -76,15 +76,22 @@ class HaversineDistanceCalculatorTest {
         assertThat(highLatLngDelta).isGreaterThan(lowLatLngDelta);
     }
 
+    /**
+     * boundingBox()는 여러 API(T-15 /search, T-19 /pharmacies)가 공유하는 순수
+     * 기하 유틸이라 특정 반경 enum을 강제하지 않는다 — 500/1000/2000/5000만
+     * 허용하던 예전 제약은 그 규칙의 실제 주인인 SearchServiceImpl로 옮겼다
+     * (SearchServiceImplTest의 반경 검증 테스트 참고). 여기서는 "양수인가"라는
+     * 순수 기하학적 전제만 검증한다.
+     */
     @ParameterizedTest
-    @ValueSource(ints = {500, 1000, 2000, 5000})
-    void allowsOnlyThePredefinedRadiusValues(int radiusM) {
+    @ValueSource(ints = {500, 1000, 1500, 2000, 5000, 10_000})
+    void allowsAnyPositiveRadius(int radiusM) {
         assertThat(calculator.boundingBox(37.5, 127.0, radiusM)).isNotNull();
     }
 
     @ParameterizedTest
-    @ValueSource(ints = {0, -100, 1500, 10_000})
-    void rejectsRadiusValuesOutsideThePredefinedSet(int radiusM) {
+    @ValueSource(ints = {0, -100})
+    void rejectsNonPositiveRadius(int radiusM) {
         assertThatThrownBy(() -> calculator.boundingBox(37.5, 127.0, radiusM))
             .isInstanceOf(IllegalArgumentException.class);
     }
