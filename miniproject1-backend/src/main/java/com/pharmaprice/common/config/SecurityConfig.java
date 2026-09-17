@@ -44,7 +44,10 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/auth/**").permitAll()
+                // signup/login/refresh만 permitAll — logout/me는 docs/API.md §2가 🔐(인증 필요)로
+                // 명시하므로 "/api/v1/auth/**" 전체를 열어두면 안 된다(T-24에서 실측 확인한 버그: 이걸
+                // 전체 permitAll로 두면 /auth/me가 401 대신 principal=null로 컨트롤러까지 들어가 500이 난다).
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/signup", "/api/v1/auth/login", "/api/v1/auth/refresh").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/drugs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/pharmacies/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
