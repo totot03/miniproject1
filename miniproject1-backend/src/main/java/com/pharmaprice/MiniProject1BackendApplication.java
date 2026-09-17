@@ -2,6 +2,7 @@ package com.pharmaprice;
 
 import com.pharmaprice.auth.security.JwtProperties;
 import com.pharmaprice.common.config.RecommendationProperties;
+import com.pharmaprice.report.service.UploadProperties;
 import jakarta.annotation.PostConstruct;
 import java.util.TimeZone;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({RecommendationProperties.class, JwtProperties.class})
+@EnableConfigurationProperties({RecommendationProperties.class, JwtProperties.class, UploadProperties.class})
 public class MiniProject1BackendApplication {
 
 	public static void main(String[] args) {

@@ -23,3 +23,5 @@ app:
     secret: test-jwt-secret-key-for-integration-tests-only-32-bytes-min
     access-token-ttl-minutes: 30
     refresh-token-ttl-days: 14
+  # target/ 은 mvn clean 이 정리하므로 테스트 업로드 파일이 실제 uploads/ 를 더럽히지 않는다.
+  upload-dir: ./target/test-uploads
