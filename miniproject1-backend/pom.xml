@@ -111,6 +111,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- Spring Boot 4 부터 @WebMvcTest 가 spring-boot-test-autoconfigure 에서
 		     이 전용 모듈로 분리됐다(spring-boot-flyway 분리와 같은 패턴). 이 의존성이
 		     없으면 T-13의 DrugControllerTest 컴파일부터 실패한다. -->

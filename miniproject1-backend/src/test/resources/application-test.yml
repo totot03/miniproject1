@@ -17,3 +17,9 @@ spring:
   flyway:
     enabled: true          # 비어 있는 pharmaprice_test 에 V1 을 자동 적용한다
     locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: test-jwt-secret-key-for-integration-tests-only-32-bytes-min
+    access-token-ttl-minutes: 30
+    refresh-token-ttl-days: 14
