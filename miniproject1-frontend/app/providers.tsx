@@ -1,9 +1,11 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Provider as ReduxProvider } from "react-redux";
 
+import { setAccessTokenProvider, setRefreshHandler } from "@/lib/api";
+import { restoreSession } from "@/lib/slices/authSlice";
 import { makeStore } from "@/lib/store";
 
 /**
@@ -37,6 +39,28 @@ export function Providers({ children }: { children: ReactNode }) {
         },
       }),
   );
+
+  // lib/api.ts는 서버 컴포넌트에서도 import되어 store를 직접 참조할 수
+  // 없으므로, 이 클라이언트 경계에서만 두 주입 지점을 연결한다. 이어서
+  // 세션을 한 번 복원해 새로고침 후에도 로그인 상태가 이어지게 한다
+  // (docs/ROADMAP.md T-25).
+  useEffect(() => {
+    setAccessTokenProvider(() => store.getState().auth.accessToken);
+    setRefreshHandler(async () => {
+      const result = await store.dispatch(restoreSession());
+      if (restoreSession.fulfilled.match(result) && result.payload) {
+        return result.payload.accessToken;
+      }
+      return null;
+    });
+
+    store.dispatch(restoreSession());
+
+    return () => {
+      setAccessTokenProvider(() => null);
+      setRefreshHandler(null);
+    };
+  }, [store]);
 
   return (
     <ReduxProvider store={store}>

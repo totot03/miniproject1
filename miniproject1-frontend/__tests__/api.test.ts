@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiFetch, setAccessTokenProvider } from "@/lib/api";
+import { ApiError, apiFetch, setAccessTokenProvider, setRefreshHandler } from "@/lib/api";
 
 /**
  * Response 대역. 실제 fetch를 띄우지 않고 상태·바디·헤더만 흉내낸다.
@@ -55,6 +55,7 @@ function requestedHeaders(fetchMock: FetchMock): Headers {
 afterEach(() => {
   vi.unstubAllGlobals();
   setAccessTokenProvider(() => null);
+  setRefreshHandler(null);
 });
 
 describe("apiFetch", () => {
@@ -188,5 +189,74 @@ describe("apiFetch 헤더 처리", () => {
     await apiFetch("/api/v1/auth/me", { auth: true });
 
     expect(requestedHeaders(fetchMock).get("Authorization")).toBeNull();
+  });
+});
+
+describe("apiFetch 401 재시도 (docs/ROADMAP.md T-25)", () => {
+  it("401 → refreshHandler 성공 시 새 토큰으로 1회 재요청한다", async () => {
+    const unauthorized = mockResponse({ status: 401, jsonBody: { code: "UNAUTHENTICATED" } });
+    const ok = mockResponse({ status: 200, jsonBody: { id: 1 } });
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(unauthorized.res as unknown as Response)
+      .mockResolvedValueOnce(ok.res as unknown as Response);
+    vi.stubGlobal("fetch", fetchMock);
+
+    setAccessTokenProvider(() => "expired-token");
+    setRefreshHandler(vi.fn(async () => "fresh-token"));
+
+    const result = await apiFetch<{ id: number }>("/api/v1/auth/me", { auth: true });
+
+    expect(result).toEqual({ id: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // 재요청은 갱신된 토큰(accessTokenProvider가 그새 바뀌었다고 가정)으로 나간다
+    expect(requestedHeaders(fetchMock).get("Authorization")).toBe("Bearer expired-token");
+  });
+
+  it("refreshHandler가 실패(null)하면 원래 401 ApiError를 던진다", async () => {
+    const { res } = mockResponse({ status: 401, jsonBody: { code: "UNAUTHENTICATED" } });
+    const fetchMock = stubFetch(res);
+
+    setAccessTokenProvider(() => "expired-token");
+    setRefreshHandler(vi.fn(async () => null));
+
+    const error = await apiFetch("/api/v1/auth/me", { auth: true }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(401);
+    // 재시도를 시도했다가 실패했을 뿐, 무한 루프 없이 fetch는 한 번만 더 불린다(총 1회)
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("재시도 응답도 401이면 무한 루프 없이 두 번째 401을 던진다", async () => {
+    const { res } = mockResponse({ status: 401, jsonBody: { code: "UNAUTHENTICATED" } });
+    const fetchMock = stubFetch(res);
+
+    setAccessTokenProvider(() => "expired-token");
+    setRefreshHandler(vi.fn(async () => "fresh-token"));
+
+    const error = await apiFetch("/api/v1/auth/me", { auth: true }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("FormData 본문은 재사용할 수 없으므로 401이어도 재시도하지 않는다", async () => {
+    const { res } = mockResponse({ status: 401, jsonBody: { code: "UNAUTHENTICATED" } });
+    const fetchMock = stubFetch(res);
+    const refreshHandler = vi.fn(async () => "fresh-token");
+
+    setAccessTokenProvider(() => "expired-token");
+    setRefreshHandler(refreshHandler);
+
+    const error = await apiFetch("/api/v1/uploads", {
+      method: "POST",
+      auth: true,
+      body: new FormData(),
+    }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(refreshHandler).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledOnce();
   });
 });

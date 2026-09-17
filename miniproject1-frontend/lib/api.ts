@@ -71,13 +71,28 @@ function fallbackMessage(status: number): string {
  * Access 토큰 공급자.
  *
  * api.ts는 서버 컴포넌트에서도 import되므로 Redux 스토어를 직접 참조할 수
- * 없다. 대신 이 주입 지점을 두고, T-25에서 authSlice를 연결한다.
+ * 없다. 대신 이 주입 지점을 두고, app/providers.tsx에서 authSlice를 연결한다.
  * 연결 전에는 항상 null을 돌려주므로 auth: true를 붙여도 헤더만 생략된다.
  */
 let accessTokenProvider: () => string | null = () => null;
 
 export function setAccessTokenProvider(provider: () => string | null): void {
   accessTokenProvider = provider;
+}
+
+/**
+ * 401 인터셉터가 쓰는 갱신 공급자.
+ *
+ * 이 함수도 같은 이유로 store를 직접 참조하지 않는다. app/providers.tsx가
+ * GET /api/auth/session(세션 복원·rotation)을 호출하는 함수를 연결하고,
+ * 성공하면 새 accessToken을, 실패하면 null을 돌려준다.
+ */
+let refreshHandler: (() => Promise<string | null>) | null = null;
+
+export function setRefreshHandler(
+  handler: (() => Promise<string | null>) | null,
+): void {
+  refreshHandler = handler;
 }
 
 function baseUrl(): string {
@@ -134,8 +149,10 @@ async function toApiError(res: Response): Promise<ApiError> {
 }
 
 export type ApiFetchInit = RequestInit & {
-  /** true면 Authorization: Bearer 헤더를 붙인다 (토큰 연결은 T-25) */
+  /** true면 Authorization: Bearer 헤더를 붙인다 */
   auth?: boolean;
+  /** 내부용 — 401 재시도 1회 제한 플래그. 직접 넘기지 않는다 */
+  _retried?: boolean;
 };
 
 /**
@@ -149,7 +166,7 @@ export async function apiFetch<T>(
   path: string,
   init?: ApiFetchInit,
 ): Promise<T> {
-  const { auth, headers, ...rest } = init ?? {};
+  const { auth, headers, _retried, ...rest } = init ?? {};
 
   const finalHeaders = new Headers(headers);
   if (!finalHeaders.has("Accept")) {
@@ -170,6 +187,18 @@ export async function apiFetch<T>(
   }
 
   const res = await fetch(resolveUrl(path), { ...rest, headers: finalHeaders });
+
+  if (res.status === 401 && auth && !_retried && refreshHandler) {
+    // body가 문자열/undefined일 때만 재시도한다. FormData·스트림은 이미
+    // 한 번 소비된 뒤라 그대로 재사용하면 빈 본문으로 나가기 때문이다.
+    const canRetryBody = rest.body === undefined || typeof rest.body === "string";
+    if (canRetryBody) {
+      const newToken = await refreshHandler();
+      if (newToken) {
+        return apiFetch<T>(path, { ...init, auth, _retried: true });
+      }
+    }
+  }
 
   if (!res.ok) {
     throw await toApiError(res);
