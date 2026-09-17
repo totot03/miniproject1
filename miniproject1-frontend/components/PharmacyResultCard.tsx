@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { DistanceBadge } from "@/components/common/DistanceBadge";
 import { PriceTag } from "@/components/common/PriceTag";
 import { formatNumber, formatRelativeDate } from "@/lib/format";
+import { isTopPick } from "@/lib/search";
 import { cn } from "@/lib/utils";
 import type { components } from "@/types/api";
 
@@ -74,14 +75,15 @@ export function PharmacyResultCard({
   if (!hasRequiredFields(item)) return null;
 
   const { pharmacy, price, distanceM, rank, recommended, badges = [] } = item;
-  const isTopPick = recommended === true || rank === 1;
+  const topPick = isTopPick({ recommended, rank });
 
   return (
     <Link href={`/pharmacies/${pharmacy.id}`} className="block">
       <Card
+        data-pharmacy-id={pharmacy.id}
         className={cn(
           "hover:bg-muted/30",
-          isTopPick && "border-primary ring-primary/20 border-2 ring-2",
+          topPick && "border-primary ring-primary/20 border-2 ring-2",
           className,
         )}
       >
@@ -89,7 +91,7 @@ export function PharmacyResultCard({
           <div className="min-w-0 flex-1 space-y-1.5">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="truncate font-semibold">{pharmacy.name}</h3>
-              {isTopPick ? <Badge>최저가 추천</Badge> : null}
+              {topPick ? <Badge>최저가 추천</Badge> : null}
               {badges.map((badge) => {
                 const meta = BADGE_LABELS[badge];
                 if (!meta) return null;
@@ -115,7 +117,7 @@ export function PharmacyResultCard({
           </div>
 
           <div className="shrink-0 space-y-1 text-right">
-            <PriceTag price={price.repPrice} size="lg" lowest={isTopPick} />
+            <PriceTag price={price.repPrice} size="lg" lowest={topPick} />
             {price.minPrice < price.repPrice ? (
               <p className="text-muted-foreground text-xs">
                 최저 <PriceTag price={price.minPrice} size="sm" />

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/common/EmptyState";
 import { PharmacyResultCard } from "@/components/PharmacyResultCard";
+import { SearchResultsWithMap } from "@/components/SearchResultsWithMap";
 import { SortToggle, type SearchRadius, type SearchSort } from "@/components/SortToggle";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
@@ -120,36 +121,38 @@ export default async function SearchPage(props: PageProps<"/search">) {
 
       <SortToggle sort={sort} radius={radius} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-3">
-          {results.length === 0 ? (
-            <EmptyState
-              title="반경 내 검색 결과가 없습니다"
-              description={
-                suggestion?.recommendedRadius
-                  ? `반경을 ${formatDistance(suggestion.recommendedRadius)}로 넓히면 ${suggestion.estimatedCount ?? 0}곳이 있습니다.`
-                  : "다른 약품이나 더 넓은 반경으로 다시 검색해 보세요."
-              }
-              action={
-                suggestion?.recommendedRadius ? (
-                  <Button asChild size="sm">
-                    <Link href={withRadius(suggestion.recommendedRadius)}>
-                      반경 넓혀서 다시 검색
-                    </Link>
-                  </Button>
-                ) : undefined
-              }
-            />
-          ) : (
-            results.map((item, index) => (
-              <PharmacyResultCard key={item.rank ?? index} item={item} />
-            ))
-          )}
-        </div>
-
-        {/* 데스크톱 전용 지도 자리 — T-22에서 채운다 */}
-        <aside className="bg-muted/30 hidden rounded-lg border border-dashed lg:block" />
-      </div>
+      {results.length === 0 ? (
+        <EmptyState
+          title="반경 내 검색 결과가 없습니다"
+          description={
+            suggestion?.recommendedRadius
+              ? `반경을 ${formatDistance(suggestion.recommendedRadius)}로 넓히면 ${suggestion.estimatedCount ?? 0}곳이 있습니다.`
+              : "다른 약품이나 더 넓은 반경으로 다시 검색해 보세요."
+          }
+          action={
+            suggestion?.recommendedRadius ? (
+              <Button asChild size="sm">
+                <Link href={withRadius(suggestion.recommendedRadius)}>
+                  반경 넓혀서 다시 검색
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <SearchResultsWithMap
+          results={results}
+          userLocation={
+            data.query?.lat != null && data.query?.lng != null
+              ? { lat: data.query.lat, lng: data.query.lng }
+              : undefined
+          }
+        >
+          {results.map((item, index) => (
+            <PharmacyResultCard key={item.rank ?? index} item={item} />
+          ))}
+        </SearchResultsWithMap>
+      )}
     </div>
   );
 }
