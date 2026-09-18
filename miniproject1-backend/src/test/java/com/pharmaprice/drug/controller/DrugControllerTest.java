@@ -13,6 +13,7 @@ import com.pharmaprice.common.dto.PageResponse;
 import com.pharmaprice.drug.dto.DrugDetailResponse;
 import com.pharmaprice.drug.dto.DrugDetailResponse.PriceStats;
 import com.pharmaprice.drug.dto.DrugSummaryResponse;
+import com.pharmaprice.drug.exception.DrugNotFoundException;
 import com.pharmaprice.drug.service.DrugService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +22,9 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/API.md} §3 응답 형태와 상태코드를 검증하는 컨트롤러 슬라이스 테스트.
@@ -115,7 +114,7 @@ class DrugControllerTest {
     @Test
     void detailReturns404WhenDrugNotFoundOrPrescriptionOnly() throws Exception {
         given(drugService.getDetail(999L))
-            .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "drug not found: 999"));
+            .willThrow(new DrugNotFoundException("drug not found: 999"));
 
         mockMvc.perform(get("/api/v1/drugs/{drugId}", 999L))
             .andExpect(status().isNotFound());

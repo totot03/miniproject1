@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.withinPercentage;
 
 import com.pharmaprice.recommendation.distance.DistanceCalculator.BoundingBox;
+import com.pharmaprice.recommendation.exception.InvalidCoordinateException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -106,6 +107,6 @@ class HaversineDistanceCalculatorTest {
     @Test
     void validateCoordinateRejectsCoordinatesOutsideKorea() {
         assertThatThrownBy(() -> DistanceCalculator.validateCoordinate(10, 200))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(InvalidCoordinateException.class);
     }
 }

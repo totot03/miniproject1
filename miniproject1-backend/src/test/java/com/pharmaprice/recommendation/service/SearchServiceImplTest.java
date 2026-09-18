@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mock;
 import com.pharmaprice.common.config.RecommendationProperties;
 import com.pharmaprice.common.config.RecommendationProperties.Outlier;
 import com.pharmaprice.common.config.RecommendationProperties.Weights;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.drug.domain.Drug;
 import com.pharmaprice.drug.repository.DrugRepository;
 import com.pharmaprice.pharmacy.domain.Region;
@@ -21,6 +22,8 @@ import com.pharmaprice.recommendation.distance.DistanceCalculator;
 import com.pharmaprice.recommendation.distance.HaversineDistanceCalculator;
 import com.pharmaprice.recommendation.dto.DataSource;
 import com.pharmaprice.recommendation.dto.SearchResponse;
+import com.pharmaprice.recommendation.exception.DrugNotFoundException;
+import com.pharmaprice.recommendation.exception.InvalidRadiusException;
 import com.pharmaprice.recommendation.repository.SearchQueryRepository;
 import com.pharmaprice.recommendation.repository.SearchQueryRepository.CandidateRow;
 import java.time.LocalDate;
@@ -28,8 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/ROADMAP.md} T-15 서비스 로직 검증. {@code DrugRepository}/
@@ -108,8 +109,7 @@ class SearchServiceImplTest {
         given(drugRepository.findById(1L)).willReturn(Optional.of(otcDrug(1L, "약품")));
 
         assertThatThrownBy(() -> service.search(1L, null, null, null, 2000, "SCORE", 20))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+            .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -120,9 +120,9 @@ class SearchServiceImplTest {
         given(drugRepository.findById(1L)).willReturn(Optional.of(otcDrug(1L, "약품")));
 
         assertThatThrownBy(() -> service.search(1L, 37.5, 127.0, null, 1500, "SCORE", 20))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(InvalidRadiusException.class);
         assertThatThrownBy(() -> service.search(1L, 37.5, 127.0, null, 10_000, "SCORE", 20))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(InvalidRadiusException.class);
     }
 
     @Test
@@ -130,8 +130,7 @@ class SearchServiceImplTest {
         given(drugRepository.findById(999L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.search(999L, 37.5, 127.0, null, 2000, "SCORE", 20))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+            .isInstanceOf(DrugNotFoundException.class);
     }
 
     @Test
@@ -141,8 +140,7 @@ class SearchServiceImplTest {
         given(drugRepository.findById(2L)).willReturn(Optional.of(prescriptionOnly));
 
         assertThatThrownBy(() -> service.search(2L, 37.5, 127.0, null, 2000, "SCORE", 20))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+            .isInstanceOf(DrugNotFoundException.class);
     }
 
     @Test

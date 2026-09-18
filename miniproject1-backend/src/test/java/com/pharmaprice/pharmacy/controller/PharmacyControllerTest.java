@@ -10,12 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.pharmaprice.common.dto.PageResponse;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse.DrugPriceItem;
 import com.pharmaprice.pharmacy.dto.PharmacySummaryResponse;
 import com.pharmaprice.pharmacy.dto.PriceHistoryResponse;
 import com.pharmaprice.pharmacy.dto.PriceHistoryResponse.PricePoint;
 import com.pharmaprice.pharmacy.dto.RegionInfo;
+import com.pharmaprice.pharmacy.exception.PharmacyNotFoundException;
 import com.pharmaprice.pharmacy.service.PharmacyService;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,11 +29,9 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/API.md} §4 응답 형태와 상태코드를 검증하는 컨트롤러 슬라이스 테스트.
@@ -94,7 +94,7 @@ class PharmacyControllerTest {
     @Test
     void listReturns400WhenServiceRejectsMissingQueryAndLocation() throws Exception {
         given(pharmacyService.list(eq(null), eq(null), eq(null), any(), anyInt(), anyInt()))
-            .willThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "q 또는 lat/lng 중 하나는 필수입니다."));
+            .willThrow(new InvalidRequestException("q 또는 lat/lng 중 하나는 필수입니다."));
 
         mockMvc.perform(get("/api/v1/pharmacies"))
             .andExpect(status().isBadRequest());
@@ -129,7 +129,7 @@ class PharmacyControllerTest {
     @Test
     void detailReturns404WhenPharmacyNotFound() throws Exception {
         given(pharmacyService.getDetail(999L, null, null))
-            .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "pharmacy not found: 999"));
+            .willThrow(new PharmacyNotFoundException("pharmacy not found: 999"));
 
         mockMvc.perform(get("/api/v1/pharmacies/{pharmacyId}", 999L))
             .andExpect(status().isNotFound());

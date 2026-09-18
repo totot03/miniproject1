@@ -19,7 +19,9 @@ import com.pharmaprice.recommendation.dto.SearchResponse.PharmacyInfo;
 import com.pharmaprice.recommendation.dto.SearchResponse.PriceInfo;
 import com.pharmaprice.recommendation.dto.SearchResponse.QueryInfo;
 import com.pharmaprice.recommendation.dto.SearchResponse.SearchResultItem;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.recommendation.dto.SearchResponse.SearchSummary;
+import com.pharmaprice.recommendation.exception.DrugNotFoundException;
 import com.pharmaprice.recommendation.service.SearchService;
 import java.time.LocalDate;
 import java.util.List;
@@ -30,11 +32,9 @@ import org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoCon
 import org.springframework.boot.security.autoconfigure.web.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.security.autoconfigure.web.servlet.ServletWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/API.md} §5 응답 형태를 검증하는 컨트롤러 슬라이스 테스트.
@@ -124,7 +124,7 @@ class SearchControllerTest {
     @Test
     void searchReturns404WhenDrugNotFoundOrPrescriptionOnly() throws Exception {
         given(searchService.search(eq(999L), any(), any(), any(), anyInt(), anyString(), anyInt()))
-            .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "drug not found: 999"));
+            .willThrow(new DrugNotFoundException("drug not found: 999"));
 
         mockMvc.perform(get("/api/v1/search").param("drugId", "999").param("regionCode", "11680"))
             .andExpect(status().isNotFound());
@@ -133,7 +133,7 @@ class SearchControllerTest {
     @Test
     void searchReturns400WhenLocationMissing() throws Exception {
         given(searchService.search(eq(1L), any(), any(), any(), anyInt(), anyString(), anyInt()))
-            .willThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "lat/lng 또는 regionCode 중 하나는 필수입니다."));
+            .willThrow(new InvalidRequestException("lat/lng 또는 regionCode 중 하나는 필수입니다."));
 
         mockMvc.perform(get("/api/v1/search").param("drugId", "1"))
             .andExpect(status().isBadRequest());

@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.pharmaprice.common.dto.PageResponse;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.pharmacy.domain.Pharmacy;
 import com.pharmaprice.pharmacy.domain.Region;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
@@ -22,8 +23,10 @@ import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.DrugPriceRow;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.PharmacyRow;
 import com.pharmaprice.pharmacy.repository.PharmacyRepository;
+import com.pharmaprice.pharmacy.exception.PharmacyNotFoundException;
 import com.pharmaprice.recommendation.distance.DistanceCalculator;
 import com.pharmaprice.recommendation.distance.HaversineDistanceCalculator;
+import com.pharmaprice.recommendation.exception.InvalidCoordinateException;
 import com.pharmaprice.report.domain.PriceReport;
 import com.pharmaprice.report.domain.ReportStatus;
 import com.pharmaprice.report.repository.PriceReportRepository;
@@ -32,8 +35,6 @@ import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/ROADMAP.md} T-19 서비스 로직 검증. {@code PharmacyQueryRepository}/
@@ -72,11 +73,9 @@ class PharmacyServiceImplTest {
     @Test
     void listThrowsWhenNoQueryOrLocation() {
         assertThatThrownBy(() -> service.list(null, null, null, null, 0, 20))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+            .isInstanceOf(InvalidRequestException.class);
         assertThatThrownBy(() -> service.list("  ", null, null, null, 0, 20))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST));
+            .isInstanceOf(InvalidRequestException.class);
     }
 
     @Test
@@ -117,7 +116,7 @@ class PharmacyServiceImplTest {
     @Test
     void listNearbyValidatesCoordinateRange() {
         assertThatThrownBy(() -> service.list(null, 10.0, 200.0, 1000, 0, 20))
-            .isInstanceOf(IllegalArgumentException.class);
+            .isInstanceOf(InvalidCoordinateException.class);
     }
 
     @Test
@@ -125,8 +124,7 @@ class PharmacyServiceImplTest {
         given(pharmacyRepository.findById(999L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getDetail(999L, null, null))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+            .isInstanceOf(PharmacyNotFoundException.class);
     }
 
     @Test
@@ -135,8 +133,7 @@ class PharmacyServiceImplTest {
         given(pharmacyRepository.findById(1L)).willReturn(Optional.of(inactive));
 
         assertThatThrownBy(() -> service.getDetail(1L, null, null))
-            .isInstanceOfSatisfying(ResponseStatusException.class,
-                ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+            .isInstanceOf(PharmacyNotFoundException.class);
     }
 
     @Test
