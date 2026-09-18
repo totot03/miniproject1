@@ -121,26 +121,31 @@ export default async function PharmacyDetailPage(
             description="아직 이 약국에 대한 가격 제보가 없습니다."
           />
         ) : (
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="text-muted-foreground border-b text-left text-xs">
-                <th className="pb-2 font-medium">약품</th>
-                <th className="pb-2 text-right font-medium">대표가격</th>
-                <th className="pb-2 text-right font-medium">제보 수</th>
-                <th className="pb-2 text-right font-medium">최근 갱신</th>
-                <th className="pb-2 text-right font-medium">전국 평균 대비</th>
-              </tr>
-            </thead>
-            <tbody>
-              {drugPrices.map((drugPrice, index) => (
-                <DrugPriceRow
-                  key={drugPrice.drugId ?? index}
-                  pharmacyId={pharmacyId}
-                  drugPrice={drugPrice}
-                />
-              ))}
-            </tbody>
-          </table>
+          // 컬럼이 5개라 375px에서는 테이블이 카드 폭보다 넓어질 수 있다 —
+          // 페이지 자체가 아니라 이 테이블만 가로로 스크롤되게 한다
+          // (components/charts/RegionStatsTable.tsx와 같은 패턴, docs/ROADMAP.md T-36).
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-sm">
+              <thead>
+                <tr className="text-muted-foreground border-b text-left text-xs">
+                  <th className="pb-2 font-medium">약품</th>
+                  <th className="pb-2 text-right font-medium">대표가격</th>
+                  <th className="pb-2 text-right font-medium">제보 수</th>
+                  <th className="pb-2 text-right font-medium">최근 갱신</th>
+                  <th className="pb-2 text-right font-medium">전국 평균 대비</th>
+                </tr>
+              </thead>
+              <tbody>
+                {drugPrices.map((drugPrice, index) => (
+                  <DrugPriceRow
+                    key={drugPrice.drugId ?? index}
+                    pharmacyId={pharmacyId}
+                    drugPrice={drugPrice}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

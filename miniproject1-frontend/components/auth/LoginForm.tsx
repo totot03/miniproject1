@@ -79,10 +79,13 @@ export function LoginForm({ next, signedUp = false }: LoginFormProps) {
             type="email"
             autoComplete="email"
             aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
+            <p id="email-error" className="text-sm text-destructive">
+              {errors.email.message}
+            </p>
           )}
         </div>
 
@@ -95,15 +98,20 @@ export function LoginForm({ next, signedUp = false }: LoginFormProps) {
             type="password"
             autoComplete="current-password"
             aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "password-error" : undefined}
             {...register("password")}
           />
           {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
+            <p id="password-error" className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
         {errors.root && (
-          <p className="text-sm text-destructive">{errors.root.message}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {errors.root.message}
+          </p>
         )}
 
         <Button type="submit" disabled={isSubmitting} className="mt-2">

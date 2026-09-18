@@ -4,6 +4,7 @@ import { CircleAlert, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
+import { getErrorMessage } from "@/lib/error-message";
 import { cn } from "@/lib/utils";
 
 export interface ErrorStateProps {
@@ -18,11 +19,6 @@ export interface ErrorStateProps {
 
 const DEFAULT_MESSAGE = "정보를 불러오지 못했습니다.";
 
-function resolveMessage(error: unknown, fallback: string): string {
-  if (error instanceof ApiError) return error.message;
-  return fallback;
-}
-
 /**
  * 에러 표시 + 재시도.
  *
@@ -36,7 +32,7 @@ export function ErrorState({
   onRetry,
   className,
 }: ErrorStateProps) {
-  const message = resolveMessage(error, fallbackMessage);
+  const message = getErrorMessage(error, fallbackMessage);
   const traceId = error instanceof ApiError ? error.traceId : undefined;
   const fieldErrors = error instanceof ApiError ? error.fieldErrors : undefined;
 

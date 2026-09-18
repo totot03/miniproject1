@@ -45,6 +45,26 @@ export class ApiError extends Error {
 /** 응답이 JSON이 아니거나 code가 없을 때 쓰는 기본 코드 (docs/API.md §1.3) */
 const FALLBACK_ERROR_CODE = "INTERNAL_ERROR";
 
+/** fetch() 자체가 실패했을 때(오프라인, 서버 다운, CORS 등) 쓰는 코드 */
+const NETWORK_ERROR_CODE = "NETWORK_ERROR";
+const NETWORK_ERROR_MESSAGE = "네트워크 연결을 확인해 주세요.";
+
+/**
+ * fetch()를 감싸 실패를 항상 ApiError로 변환한다.
+ *
+ * fetch()는 응답을 받기 전 단계(오프라인, DNS 실패, CORS 차단 등)에서
+ * "Failed to fetch" 같은 영어 TypeError를 던진다. 이 예외는 toApiError가
+ * 다루는 Response가 아예 없어 그대로 두면 화면에 영어 원문이 노출될 수
+ * 있다(docs/ROADMAP.md T-36). status 0으로 표시해 실제 서버 응답과 구분한다.
+ */
+async function safeFetch(input: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    throw new ApiError(0, NETWORK_ERROR_CODE, NETWORK_ERROR_MESSAGE);
+  }
+}
+
 /** status별 기본 메시지. 서버가 에러 바디를 주지 못한 경우에만 쓰인다. */
 const FALLBACK_MESSAGES: Record<number, string> = {
   400: "요청 값을 확인해 주세요.",
@@ -186,7 +206,7 @@ export async function apiFetch<T>(
     if (token) finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(resolveUrl(path), { ...rest, headers: finalHeaders });
+  const res = await safeFetch(resolveUrl(path), { ...rest, headers: finalHeaders });
 
   if (res.status === 401 && auth && !_retried && refreshHandler) {
     // body가 문자열/undefined일 때만 재시도한다. FormData·스트림은 이미
@@ -235,7 +255,7 @@ export async function apiFetchBlob(
     if (token) finalHeaders.set("Authorization", `Bearer ${token}`);
   }
 
-  const res = await fetch(resolveUrl(path), { ...rest, headers: finalHeaders });
+  const res = await safeFetch(resolveUrl(path), { ...rest, headers: finalHeaders });
 
   if (!res.ok) {
     throw await toApiError(res);

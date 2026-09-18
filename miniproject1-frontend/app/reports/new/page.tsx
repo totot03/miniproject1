@@ -215,6 +215,7 @@ export default function ReportNewPage() {
                 id="price"
                 inputMode="numeric"
                 aria-invalid={Boolean(errors.price)}
+                aria-describedby={errors.price ? "price-error" : "price-hint"}
                 placeholder="0"
                 className="pr-8 text-base"
                 value={priceText}
@@ -229,10 +230,14 @@ export default function ReportNewPage() {
                 원
               </span>
             </div>
-            <p className="text-muted-foreground text-xs">
+            <p id="price-hint" className="text-muted-foreground text-xs">
               {MIN_PRICE.toLocaleString("ko-KR")}~{MAX_PRICE.toLocaleString("ko-KR")}원
             </p>
-            {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+            {errors.price && (
+              <p id="price-error" className="text-sm text-destructive">
+                {errors.price.message}
+              </p>
+            )}
           </div>
 
           {!advancedOpen ? (
@@ -250,11 +255,16 @@ export default function ReportNewPage() {
                   type="date"
                   max={todayInKST()}
                   aria-invalid={Boolean(errors.purchasedAt)}
+                  aria-describedby={errors.purchasedAt ? "purchasedAt-error" : "purchasedAt-hint"}
                   {...form.register("purchasedAt")}
                 />
-                <p className="text-muted-foreground text-xs">오늘부터 {MAX_PAST_DAYS}일 이내만 입력할 수 있습니다.</p>
+                <p id="purchasedAt-hint" className="text-muted-foreground text-xs">
+                  오늘부터 {MAX_PAST_DAYS}일 이내만 입력할 수 있습니다.
+                </p>
                 {errors.purchasedAt && (
-                  <p className="text-sm text-destructive">{errors.purchasedAt.message}</p>
+                  <p id="purchasedAt-error" className="text-sm text-destructive">
+                    {errors.purchasedAt.message}
+                  </p>
                 )}
               </div>
 
@@ -307,15 +317,24 @@ export default function ReportNewPage() {
                   rows={3}
                   placeholder="예: 1+1 행사 아님, 정가"
                   aria-invalid={Boolean(errors.memo)}
+                  aria-describedby={errors.memo ? "memo-error" : undefined}
                   className="border-input focus-visible:border-ring focus-visible:ring-ring/50 min-h-16 w-full rounded-lg border bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:ring-3"
                   {...form.register("memo")}
                 />
-                {errors.memo && <p className="text-sm text-destructive">{errors.memo.message}</p>}
+                {errors.memo && (
+                  <p id="memo-error" className="text-sm text-destructive">
+                    {errors.memo.message}
+                  </p>
+                )}
               </div>
             </div>
           )}
 
-          {errors.root && <p className="text-sm text-destructive">{errors.root.message}</p>}
+          {errors.root && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.root.message}
+            </p>
+          )}
 
           <Button type="submit" disabled={isSubmitting || uploadMutation.isPending} className="mt-1">
             {isSubmitting ? "제보하는 중…" : "제보하기"}

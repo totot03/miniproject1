@@ -92,8 +92,13 @@ export function SearchResultsWithMap({
 
   return (
     <div
+      // grid-cols-1(= grid-template-columns: minmax(0, 1fr))이 없으면 트랙이
+      // 카드 내용의 max-content 너비까지 늘어나 375px에서 페이지 전체가
+      // 가로로 밀린다(docs/ROADMAP.md T-36 실측 — "grid 블로우아웃").
       className={
-        mapFailed ? "grid gap-6" : "grid gap-6 lg:grid-cols-[1fr_360px]"
+        mapFailed
+          ? "grid grid-cols-1 gap-6"
+          : "grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]"
       }
     >
       <div

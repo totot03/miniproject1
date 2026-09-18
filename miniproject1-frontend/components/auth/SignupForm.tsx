@@ -84,10 +84,13 @@ export function SignupForm() {
             type="email"
             autoComplete="email"
             aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "email-error" : undefined}
             {...register("email")}
           />
           {errors.email && (
-            <p className="text-sm text-destructive">{errors.email.message}</p>
+            <p id="email-error" className="text-sm text-destructive">
+              {errors.email.message}
+            </p>
           )}
         </div>
 
@@ -99,10 +102,13 @@ export function SignupForm() {
             id="nickname"
             autoComplete="nickname"
             aria-invalid={Boolean(errors.nickname)}
+            aria-describedby={errors.nickname ? "nickname-error" : undefined}
             {...register("nickname")}
           />
           {errors.nickname && (
-            <p className="text-sm text-destructive">{errors.nickname.message}</p>
+            <p id="nickname-error" className="text-sm text-destructive">
+              {errors.nickname.message}
+            </p>
           )}
         </div>
 
@@ -115,18 +121,23 @@ export function SignupForm() {
             type="password"
             autoComplete="new-password"
             aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "password-error" : "password-hint"}
             {...register("password")}
           />
-          <p className="text-xs text-muted-foreground">
+          <p id="password-hint" className="text-xs text-muted-foreground">
             8~64자, 영문과 숫자를 포함해야 합니다.
           </p>
           {errors.password && (
-            <p className="text-sm text-destructive">{errors.password.message}</p>
+            <p id="password-error" className="text-sm text-destructive">
+              {errors.password.message}
+            </p>
           )}
         </div>
 
         {errors.root && (
-          <p className="text-sm text-destructive">{errors.root.message}</p>
+          <p role="alert" className="text-sm text-destructive">
+            {errors.root.message}
+          </p>
         )}
 
         <Button type="submit" disabled={isSubmitting} className="mt-2">
