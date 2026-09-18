@@ -14,6 +14,9 @@ public interface PriceReportRepository extends JpaRepository<PriceReport, Long> 
     /** T-30 "내 제보 목록"에서 본인 제보인지 확인할 때 쓴다. */
     Optional<PriceReport> findByIdAndUserId(Long id, Long userId);
 
+    /** T-31 관리자 통계 overview의 flaggedReportCount. */
+    long countByFlaggedTrue();
+
     /**
      * T-20 가격 이력 API 전용 조회. {@code PriceReport}는 스칼라 컬럼(price/purchasedAt/flagged)만
      * 필요하고 jsonb 컬럼이나 다중 테이블 집계가 없어 {@code PharmacyQueryRepository}식
