@@ -108,4 +108,10 @@ public class PriceReport extends BaseAuditEntity {
         this.flagged = true;
         this.flagReason = reason;
     }
+
+    /** 관리자가 이상치 플래그를 해제할 때 호출한다. */
+    public void unflag() {
+        this.flagged = false;
+        this.flagReason = null;
+    }
 }
