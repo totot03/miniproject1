@@ -1,8 +1,16 @@
 # miniProject1 — pharmaprice
 
-동네 약국의 일반의약품 가격을 검색·비교하는 미니 프로젝트다. 상세 요구사항은 [docs/PRD.md](./docs/PRD.md), DB 설계는 [docs/DATABASE.md](./docs/DATABASE.md), 작업 계획은 [docs/ROADMAP.md](./docs/ROADMAP.md)를 참고한다.
+동네 약국의 일반의약품 가격을 검색·비교하는 미니 프로젝트다. 검색창에 약 이름을 입력하면 반경 내 약국의 최저가를 가격·거리·정보 신선도 기준으로 추천하고, 회원이 가격을 제보하면 순위에 곧바로 반영된다. 상세 요구사항은 [docs/PRD.md](./docs/PRD.md), DB 설계는 [docs/DATABASE.md](./docs/DATABASE.md), 작업 계획은 [docs/ROADMAP.md](./docs/ROADMAP.md)를 참고한다.
 
-> 이 문서는 아직 "개발 컨벤션"·"로컬 환경 준비" 절만 채워진 상태다. 프로젝트 개요·실행 방법 등 나머지 절은 `docs/ROADMAP.md`의 T-37(마감) 단계에서 보완할 예정이다.
+> **목데이터 고지**: 약국 위치는 공공데이터를 사용했지만 가격·제보·계정은 전부 학습 목적으로 생성한 가짜 데이터다. 실제 판매가가 아니며, 이 정보를 근거로 약국을 방문해서는 안 된다. 대외 공개·배포하지 않는 비공개 데모다.
+
+---
+
+## 요구 사항
+
+- JDK 21
+- Node 22
+- PostgreSQL 17 (Docker 미사용, 로컬 설치)
 
 ---
 
@@ -114,3 +122,95 @@ cp .env.example .env
 ```
 
 `.env`는 `.gitignore`에 의해 추적되지 않는다(이후 `.gitignore` 추가 시 반영). 비밀번호(`POSTGRES_PASSWORD`)는 각자 로컬 환경에서 자유롭게 바꿔도 된다 — 단, 1번 단계의 `CREATE USER` 비밀번호와 `.env`의 값을 반드시 일치시킨다.
+
+---
+
+## 실행 명령
+
+`.env` 준비가 끝났으면 터미널 2개를 열어 백엔드와 프론트를 각각 기동한다.
+
+**터미널 1 — 백엔드**
+
+```bash
+cd miniproject1-backend
+./mvnw spring-boot:run
+```
+
+로그에 `Started MiniProject1BackendApplication`이 뜨면 정상 기동이다(`http://localhost:8080`). 최초 기동 시 Flyway가 스키마·시드(약국 400건 등)를 자동으로 채운다.
+
+**터미널 2 — 프론트**
+
+```bash
+cd miniproject1-frontend
+npm install
+npm run dev
+```
+
+`http://localhost:3000`에서 접속한다. 프론트 환경변수는 루트 `.env`가 아니라 `miniproject1-frontend/.env.local`에 별도로 둔다(아래 환경변수 절 참고).
+
+---
+
+## 환경변수
+
+| 변수 | 위치 | 설명 | 필수 |
+| --- | --- | --- | --- |
+| `POSTGRES_HOST` | 루트 `.env` | PostgreSQL 호스트 | 예 (기본 `localhost`) |
+| `POSTGRES_PORT` | 루트 `.env` | PostgreSQL 포트 | 예 (기본 `5432`) |
+| `POSTGRES_DB` | 루트 `.env` | 데이터베이스 이름 | 예 (기본 `pharmaprice`) |
+| `POSTGRES_USER` | 루트 `.env` | DB 계정 | 예 (기본 `pharmaprice`) |
+| `POSTGRES_PASSWORD` | 루트 `.env` | DB 비밀번호. 1번 단계의 `CREATE USER` 비밀번호와 일치해야 함 | 예 |
+| `JWT_SECRET` | 루트 `.env` | JWT 서명 키. 최소 32바이트(256비트) 랜덤 문자열 — 짧으면 `WeakKeyException`으로 기동 자체가 실패한다 | 예 |
+| `TZ` | 루트 `.env` | 서버 타임존 | 예 (`Asia/Seoul` 고정) |
+| `NEXT_PUBLIC_API_BASE_URL` | `miniproject1-frontend/.env.local` | 프론트가 호출할 백엔드 주소 | 예 (기본 `http://localhost:8080`) |
+| `NEXT_PUBLIC_KAKAO_MAP_KEY` | `miniproject1-frontend/.env.local` | 카카오맵 JavaScript 키(카카오 개발자 콘솔 발급, `localhost` 도메인 등록 필요) | 예 (지도 기능에 한해) |
+
+> 루트 `.env`와 `miniproject1-frontend/.env.local`은 서로 다른 파일이다. 둘 다 채워야 백엔드·프론트가 모두 정상 동작한다.
+
+---
+
+## 기본 계정
+
+시드 데이터에 관리자 계정이 포함되어 있다.
+
+| 이메일 | 비밀번호 | 권한 |
+| --- | --- | --- |
+| `admin@example.com` | `Admin1234!` | ADMIN |
+
+일반 사용자는 `/signup`에서 직접 가입한다.
+
+---
+
+## 문서 링크
+
+- [docs/PRD.md](./docs/PRD.md) — 요구사항 정의
+- [docs/DATABASE.md](./docs/DATABASE.md) — DB 스키마 설계
+- [docs/API.md](./docs/API.md) — API 명세
+- [docs/ROADMAP.md](./docs/ROADMAP.md) — 태스크 분해·진행 방식
+
+---
+
+## 트러블슈팅
+
+**포트 5432·8080·3000 충돌**
+다른 프로세스가 이미 해당 포트를 쓰고 있으면 기동이 실패한다. `netstat -ano | findstr :5432`(Windows) 등으로 점유 프로세스를 확인해 종료하거나, PostgreSQL 포트를 바꿨다면 `.env`의 `POSTGRES_PORT`도 함께 바꾼다.
+
+**`pg_trgm` 권한 오류**
+일반 유저 계정은 확장 설치 권한이 없다. `postgres` 슈퍼유저로 접속해 `CREATE EXTENSION IF NOT EXISTS pg_trgm;`을 먼저 실행한다.
+
+**카카오맵이 로딩되지 않음(키 도메인 미등록)**
+카카오 개발자 콘솔의 JavaScript 키에 사용 중인 도메인이 등록되어 있지 않으면 지도가 조용히 빈 화면으로 남는다. 콘솔에서 플랫폼 도메인을 등록한다.
+
+**Flyway 체크섬 불일치**
+이미 적용한 마이그레이션 파일(`V1__init.sql` 등)을 수정하면 발생한다. 개발 중이라면 DB를 재생성해 처음부터 다시 적용하거나(로컬 환경 준비 2번 SQL 재실행), `flyway repair`로 체크섬을 갱신한다.
+
+**JDK 버전 불일치**
+`java.version`이 21로 고정되어 있다(`miniproject1-backend/pom.xml`). `java -version`으로 실행 중인 JDK가 21인지 확인한다.
+
+**`ddl-auto: validate` 실패**
+Hibernate가 엔티티와 실제 테이블 스키마가 다르다고 판단하면 기동을 거부한다. 마이그레이션 파일과 엔티티 정의가 어긋난 것이므로, DB를 재생성해 마이그레이션을 처음부터 다시 적용해본다.
+
+**`JWT_SECRET`을 안 채웠는데 원인 불명의 에러로 기동이 실패함 (실측)**
+`app.jwt.secret`은 기본값이 없어 환경변수가 비어 있으면 Spring이 플레이스홀더 문자열(`${JWT_SECRET}`, 13자)을 그대로 시크릿으로 써버려 `WeakKeyException`(키가 256비트 미만)으로 기동에 실패한다. 게다가 `spring-boot-devtools`가 붙어 있어 Maven은 이 실패를 `BUILD SUCCESS`로 표시하고 조용히 재시작 대기 상태에 빠진다 — 로그에서 `Started MiniProject1BackendApplication`이 실제로 찍혔는지 반드시 확인한다. `.env`에 32바이트 이상의 랜덤 문자열을 채우면 해결되며, 자동 로딩은 `DotenvEnvironmentPostProcessor`가 처리한다.
+
+**프론트에서 지도·API 호출이 전부 실패함 (실측)**
+`NEXT_PUBLIC_*` 값은 루트 `.env`가 아니라 `miniproject1-frontend/.env.local`에 있어야 Next.js가 읽는다. 루트 `.env`만 채우고 프론트 폴더의 `.env.local`을 빠뜨리면 카카오맵 키와 API 주소가 모두 비어 화면이 조용히 깨진다.
