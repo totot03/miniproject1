@@ -4,13 +4,12 @@ import com.pharmaprice.common.dto.PageResponse;
 import com.pharmaprice.drug.dto.DrugDetailResponse;
 import com.pharmaprice.drug.dto.DrugDetailResponse.PriceStats;
 import com.pharmaprice.drug.dto.DrugSummaryResponse;
+import com.pharmaprice.drug.exception.DrugNotFoundException;
 import com.pharmaprice.drug.repository.DrugQueryRepository;
 import com.pharmaprice.drug.repository.DrugQueryRepository.DrugDetailRow;
 import com.pharmaprice.drug.repository.DrugQueryRepository.DrugSearchRow;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -37,7 +36,7 @@ public class DrugServiceImpl implements DrugService {
     @Override
     public DrugDetailResponse getDetail(Long drugId) {
         DrugDetailRow row = drugQueryRepository.findDetail(drugId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "drug not found: " + drugId));
+            .orElseThrow(() -> new DrugNotFoundException("drug not found: " + drugId));
         return toDetail(row);
     }
 

@@ -12,6 +12,6 @@ public interface DrugService {
 
     PageResponse<DrugSummaryResponse> search(String q, String category, int page, int size);
 
-    /** 전문의약품이거나 존재하지 않으면 404({@code ResponseStatusException})를 던진다. */
+    /** 전문의약품이거나 존재하지 않으면 404({@code DrugNotFoundException})를 던진다. */
     DrugDetailResponse getDetail(Long drugId);
 }

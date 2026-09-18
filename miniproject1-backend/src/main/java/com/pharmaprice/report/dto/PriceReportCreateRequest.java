@@ -16,7 +16,10 @@ import java.time.LocalDate;
 public record PriceReportCreateRequest(
     @NotNull Long pharmacyId,
     @NotNull Long drugId,
-    @NotNull @Min(100) @Max(200_000) Integer price,
+    @NotNull
+    @Min(value = 100, message = "가격은 100원 이상 200,000원 이하여야 합니다.")
+    @Max(value = 200_000, message = "가격은 100원 이상 200,000원 이하여야 합니다.")
+    Integer price,
     LocalDate purchasedAt,
     Long receiptFileId,
     @Size(max = 200) String memo

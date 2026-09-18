@@ -1,6 +1,7 @@
 package com.pharmaprice.pharmacy.service;
 
 import com.pharmaprice.common.dto.PageResponse;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.pharmacy.domain.Pharmacy;
 import com.pharmaprice.pharmacy.domain.Region;
 import com.pharmaprice.pharmacy.dto.PharmacyDetailResponse;
@@ -9,6 +10,7 @@ import com.pharmaprice.pharmacy.dto.PharmacySummaryResponse;
 import com.pharmaprice.pharmacy.dto.PriceHistoryResponse;
 import com.pharmaprice.pharmacy.dto.PriceHistoryResponse.PricePoint;
 import com.pharmaprice.pharmacy.dto.RegionInfo;
+import com.pharmaprice.pharmacy.exception.PharmacyNotFoundException;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.DrugPriceRow;
 import com.pharmaprice.pharmacy.repository.PharmacyQueryRepository.PharmacyRow;
@@ -21,10 +23,8 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/ROADMAP.md} T-19 / {@code docs/API.md} §4 구현체.
@@ -72,7 +72,7 @@ public class PharmacyServiceImpl implements PharmacyService {
         String qParam = (q != null && !q.isBlank()) ? q : null;
         boolean hasLocation = lat != null && lng != null;
         if (qParam == null && !hasLocation) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "q 또는 lat/lng 중 하나는 필수입니다.");
+            throw new InvalidRequestException("q 또는 lat/lng 중 하나는 필수입니다.");
         }
 
         int clampedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
@@ -96,7 +96,7 @@ public class PharmacyServiceImpl implements PharmacyService {
     /** lat/lng 있는 경로 — 바운딩박스 후보 전체를 가져와 Java에서 정확 거리 필터·정렬·페이지네이션한다. */
     private PageResponse<PharmacySummaryResponse> listNearby(String q, double lat, double lng, Integer radius,
                                                               int page, int size) {
-        DistanceCalculator.validateCoordinate(lat, lng); // 범위 밖이면 IllegalArgumentException — 400 변환은 T-35 몫
+        DistanceCalculator.validateCoordinate(lat, lng); // 범위 밖이면 InvalidCoordinateException(400) — GlobalExceptionHandler가 변환
         int effectiveRadius = Math.min(Math.max(radius != null ? radius : DEFAULT_RADIUS_M, 1), MAX_RADIUS_M);
 
         BoundingBox box = distanceCalculator.boundingBox(lat, lng, effectiveRadius);
@@ -123,7 +123,7 @@ public class PharmacyServiceImpl implements PharmacyService {
         // region(지연 로딩)은 spring.jpa.open-in-view=false라 이 트랜잭션 안에서 읽어야 한다.
         Pharmacy pharmacy = pharmacyRepository.findById(pharmacyId)
             .filter(Pharmacy::isActive)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "pharmacy not found: " + pharmacyId));
+            .orElseThrow(() -> new PharmacyNotFoundException("pharmacy not found: " + pharmacyId));
 
         Long distanceM = null;
         if (lat != null && lng != null) {

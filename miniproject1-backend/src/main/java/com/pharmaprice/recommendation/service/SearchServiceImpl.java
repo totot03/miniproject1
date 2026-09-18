@@ -1,6 +1,7 @@
 package com.pharmaprice.recommendation.service;
 
 import com.pharmaprice.common.config.RecommendationProperties;
+import com.pharmaprice.common.exception.InvalidRequestException;
 import com.pharmaprice.drug.domain.Drug;
 import com.pharmaprice.drug.repository.DrugRepository;
 import com.pharmaprice.pharmacy.domain.Region;
@@ -16,6 +17,8 @@ import com.pharmaprice.recommendation.dto.SearchResponse.QueryInfo;
 import com.pharmaprice.recommendation.dto.SearchResponse.SearchResultItem;
 import com.pharmaprice.recommendation.dto.SearchResponse.SearchSuggestion;
 import com.pharmaprice.recommendation.dto.SearchResponse.SearchSummary;
+import com.pharmaprice.recommendation.exception.DrugNotFoundException;
+import com.pharmaprice.recommendation.exception.InvalidRadiusException;
 import com.pharmaprice.recommendation.repository.SearchQueryRepository;
 import com.pharmaprice.recommendation.repository.SearchQueryRepository.CandidateRow;
 import com.pharmaprice.recommendation.service.ScoreCalculator.Candidate;
@@ -32,9 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * {@code docs/ROADMAP.md} T-15 / {@code docs/API.md} §5. 지금까지 따로 만든
@@ -77,12 +78,10 @@ public class SearchServiceImpl implements SearchService {
                                   String sortParam, int limit) {
         Drug drug = drugRepository.findById(drugId)
             .filter(Drug::isOtcFlag)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "drug not found: " + drugId));
+            .orElseThrow(() -> new DrugNotFoundException("drug not found: " + drugId));
         LocationResolution location = resolveLocation(lat, lng, regionCode);
-        // 허용 안 된 반경 — 범위 밖 좌표와 마찬가지로 400 변환은 T-35 몫이라
-        // 지금은 IllegalArgumentException을 그대로 흘려보낸다.
         if (!RADIUS_STEPS.contains(radius)) {
-            throw new IllegalArgumentException(
+            throw new InvalidRadiusException(
                 "허용되지 않은 반경입니다: " + radius + " (허용값: " + RADIUS_STEPS + ")");
         }
         SortOption sort = SortOption.from(sortParam);
@@ -208,15 +207,15 @@ public class SearchServiceImpl implements SearchService {
 
     private LocationResolution resolveLocation(Double lat, Double lng, String regionCode) {
         if (lat != null && lng != null) {
-            DistanceCalculator.validateCoordinate(lat, lng); // 범위 밖이면 IllegalArgumentException — 400 변환은 T-35 몫
+            DistanceCalculator.validateCoordinate(lat, lng); // 범위 밖이면 InvalidCoordinateException(400) — GlobalExceptionHandler가 변환
             return new LocationResolution(lat, lng, "GPS");
         }
         if (regionCode != null && !regionCode.isBlank()) {
             Region region = regionRepository.findById(regionCode)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid regionCode: " + regionCode));
+                .orElseThrow(() -> new InvalidRequestException("invalid regionCode: " + regionCode));
             return new LocationResolution(region.getCenterLat(), region.getCenterLng(), "REGION");
         }
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "lat/lng 또는 regionCode 중 하나는 필수입니다.");
+        throw new InvalidRequestException("lat/lng 또는 regionCode 중 하나는 필수입니다.");
     }
 
     private DrugInfo toDrugInfo(Drug drug) {

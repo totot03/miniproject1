@@ -1,5 +1,7 @@
 package com.pharmaprice.recommendation.distance;
 
+import com.pharmaprice.recommendation.exception.InvalidCoordinateException;
+
 /**
  * 두 좌표 사이의 거리와, 반경 검색을 위한 바운딩 박스를 계산한다.
  *
@@ -35,11 +37,11 @@ public interface DistanceCalculator {
      * 사용자 입력 좌표(쿼리 파라미터)를 {@code 400 INVALID_COORDINATE} 로 변환하기
      * 전에 호출하는 유틸이다.
      *
-     * @throws IllegalArgumentException 범위를 벗어난 경우
+     * @throws InvalidCoordinateException 범위를 벗어난 경우
      */
     static void validateCoordinate(double lat, double lng) {
         if (lat < 33 || lat > 39 || lng < 124 || lng > 132) {
-            throw new IllegalArgumentException(
+            throw new InvalidCoordinateException(
                 "좌표가 대한민국 범위를 벗어났습니다: lat=%s, lng=%s".formatted(lat, lng));
         }
     }
