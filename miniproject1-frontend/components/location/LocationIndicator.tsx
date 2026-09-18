@@ -62,7 +62,12 @@ export function LocationIndicator() {
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="text-muted-foreground hover:text-foreground ml-auto flex items-center gap-1 text-xs transition-colors sm:text-sm"
+        // min-w-0가 없으면 flex 아이템의 기본 자동 최소 너비가 (truncate로
+        // white-space:nowrap된) 텍스트 전체 폭이 돼버려, 좁은 화면에서 이
+        // 버튼이 줄어들지 못하고 헤더 전체가 가로로 넘친다(T-34 375px 검증 중
+        // 발견 — SiteHeader.tsx의 shrink-0 정리로 다른 항목들이 안 줄어들게
+        // 되면서 처음으로 이 버튼에 모든 축소 압력이 몰려 드러났다).
+        className="text-muted-foreground hover:text-foreground ml-auto flex min-w-0 items-center gap-1 text-xs transition-colors sm:text-sm"
       >
         <MapPin aria-hidden="true" className="size-4 shrink-0" />
         <span className="max-w-[9rem] truncate sm:max-w-none">

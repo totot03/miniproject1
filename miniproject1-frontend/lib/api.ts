@@ -212,3 +212,34 @@ export async function apiFetch<T>(
 
   return (await res.json()) as T;
 }
+
+/**
+ * 인증이 필요한 바이너리(이미지 등) 응답을 받는다.
+ *
+ * `GET /api/v1/uploads/{fileId}`(영수증 원본, T-27)처럼 access 토큰이 필요한
+ * 파일은 `<img src>`로 못 그린다 — 이 앱은 토큰을 쿠키가 아닌 메모리에만 두므로
+ * 브라우저가 Authorization 헤더를 자동으로 붙여주지 않는다. 대신 이 함수로
+ * Blob을 받아 `URL.createObjectURL`로 바꿔 쓴다(T-33 관리자 제보 영수증 썸네일).
+ * 401 재시도는 apiFetch와 달리 하지 않는다 — 썸네일은 보조 정보라 실패하면
+ * 자리표시자만 보여주면 된다.
+ */
+export async function apiFetchBlob(
+  path: string,
+  init?: ApiFetchInit,
+): Promise<Blob> {
+  const { auth, headers, ...rest } = init ?? {};
+
+  const finalHeaders = new Headers(headers);
+  if (auth) {
+    const token = accessTokenProvider();
+    if (token) finalHeaders.set("Authorization", `Bearer ${token}`);
+  }
+
+  const res = await fetch(resolveUrl(path), { ...rest, headers: finalHeaders });
+
+  if (!res.ok) {
+    throw await toApiError(res);
+  }
+
+  return res.blob();
+}

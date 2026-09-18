@@ -25,6 +25,15 @@ export function formatNumber(value: number): string {
 }
 
 /**
+ * 0~1 사이 비율을 소수점 1자리 퍼센트로 표기한다.
+ *
+ * @example formatPercent(0.619) // "61.9%"
+ */
+export function formatPercent(ratio: number): string {
+  return `${(ratio * 100).toFixed(1)}%`;
+}
+
+/**
  * 미터 거리를 사람이 읽는 단위로 표기한다.
  *
  * 1000m 미만은 미터, 그 이상은 소수점 한 자리 킬로미터다.
