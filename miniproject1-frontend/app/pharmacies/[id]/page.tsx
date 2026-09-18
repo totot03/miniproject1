@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { DrugPriceRow } from "@/components/DrugPriceRow";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -102,9 +104,13 @@ export default async function PharmacyDetailPage(
         ) : null}
       </div>
 
-      {/* FS-4(제보 폼) 전까지는 버튼만 두고 비활성 처리한다 (docs/ROADMAP.md T-21 5번). */}
-      <Button disabled title="가격 제보 화면은 아직 준비 중입니다" className="w-fit">
-        이 약국에 가격 제보하기
+      {/* docs/ROADMAP.md T-29 3번 — 약국 상세에서 넘어가면 이 약국이 미리 채워진다. */}
+      <Button asChild className="w-fit">
+        <Link
+          href={`/reports/new?pharmacyId=${pharmacyId}&pharmacyName=${encodeURIComponent(pharmacy.name ?? "")}`}
+        >
+          이 약국에 가격 제보하기
+        </Link>
       </Button>
 
       <div className="space-y-2">

@@ -59,7 +59,18 @@ function optionId(listboxId: string, drugId: number): string {
  * 표준 콤보박스 모델이라 서로 다르다. shadcn 레지스트리 연결도 현재 끊겨
  * 있어 새 컴포넌트를 들여오는 대신 기존 Input + 직접 만든 listbox로 만든다.
  */
-export function DrugAutocomplete() {
+export interface DrugAutocompleteProps {
+  /**
+   * 지정하면 선택 시 `/search`로 이동하는 대신 이 콜백만 호출한다.
+   * 가격 제보 폼(components/DrugPicker.tsx, docs/ROADMAP.md T-29)이 이
+   * 콤보박스 UI·키보드 내비게이션을 재사용하기 위한 확장 지점 — 위치 해석이
+   * 필요 없는 "선택"과, 검색 결과로 이동해야 하는 "탐색"은 목적이 달라
+   * 분기한다.
+   */
+  onSelect?: (drug: { id: number; displayName: string; packageUnit?: string }) => void;
+}
+
+export function DrugAutocomplete({ onSelect }: DrugAutocompleteProps = {}) {
   const router = useRouter();
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -102,8 +113,15 @@ export function DrugAutocomplete() {
     );
   }
 
-  function handleSelect(drugId: number) {
+  function handleSelect(item: DrugSummary & { id: number; displayName: string }) {
     setIsOpen(false);
+    if (onSelect) {
+      onSelect({ id: item.id, displayName: item.displayName, packageUnit: item.packageUnit ?? undefined });
+      setText("");
+      return;
+    }
+
+    const drugId = item.id;
     if (locationState.status === "granted" || locationState.status === "fallback") {
       navigate(drugId, locationState.lat, locationState.lng);
       return;
@@ -164,7 +182,7 @@ export function DrugAutocomplete() {
       case "Enter":
         if (activeIndex >= 0 && items[activeIndex]) {
           event.preventDefault();
-          handleSelect(items[activeIndex].id);
+          handleSelect(items[activeIndex]);
         }
         break;
       case "Escape":
@@ -245,7 +263,7 @@ export function DrugAutocomplete() {
                     // 닫아버려 클릭이 씹힌다.
                     onMouseDown={(event) => {
                       event.preventDefault();
-                      handleSelect(item.id);
+                      handleSelect(item);
                     }}
                   >
                     <span className="font-medium">{item.displayName}</span>

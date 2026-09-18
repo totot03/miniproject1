@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { DisclaimerBanner } from "@/components/layout/DisclaimerBanner";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -41,6 +42,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <main className="flex-1">{children}</main>
           <SiteFooter />
         </Providers>
+        {/* 제보 폼(T-29) 성공 알림용. 페이지 이동 뒤에도 보이도록 루트에 한 번만 마운트한다. */}
+        <Toaster richColors position="top-center" />
       </body>
     </html>
   );
