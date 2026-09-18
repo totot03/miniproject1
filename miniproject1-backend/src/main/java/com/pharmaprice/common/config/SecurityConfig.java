@@ -52,6 +52,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/pharmacies/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/regions").permitAll()
+                // mine=true 조건부 인증은 PriceReportController가 직접 처리한다(docs/ROADMAP.md T-28).
+                .requestMatchers(HttpMethod.GET, "/api/v1/price-reports").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/health").permitAll()
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()

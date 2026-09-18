@@ -2,6 +2,7 @@ package com.pharmaprice.report.service;
 
 import com.pharmaprice.auth.domain.AppUser;
 import com.pharmaprice.auth.repository.AppUserRepository;
+import com.pharmaprice.common.dto.PageResponse;
 import com.pharmaprice.drug.domain.Drug;
 import com.pharmaprice.drug.repository.DrugRepository;
 import com.pharmaprice.pharmacy.domain.Pharmacy;
@@ -11,17 +12,23 @@ import com.pharmaprice.recommendation.service.PriceStatService;
 import com.pharmaprice.report.domain.FlagReason;
 import com.pharmaprice.report.domain.PriceReport;
 import com.pharmaprice.report.domain.ReportSource;
+import com.pharmaprice.report.domain.ReportStatus;
 import com.pharmaprice.report.domain.UploadedFile;
 import com.pharmaprice.report.dto.PriceReportCreateRequest;
+import com.pharmaprice.report.dto.PriceReportListItemResponse;
 import com.pharmaprice.report.dto.PriceReportResponse;
 import com.pharmaprice.report.dto.PriceReportResponse.UpdatedStat;
 import com.pharmaprice.report.exception.DrugNotFoundException;
 import com.pharmaprice.report.exception.DrugNotOtcException;
 import com.pharmaprice.report.exception.InvalidDateRangeException;
 import com.pharmaprice.report.exception.PharmacyNotFoundException;
+import com.pharmaprice.report.repository.PriceReportQueryRepository;
+import com.pharmaprice.report.repository.PriceReportQueryRepository.PriceReportRow;
 import com.pharmaprice.report.repository.PriceReportRepository;
 import com.pharmaprice.report.repository.UploadedFileRepository;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,11 +54,15 @@ public class PriceReportServiceImpl implements PriceReportService {
     /** {@code docs/API.md} §6 "미래 불가, 180일 초과 과거 불가". */
     private static final int MAX_PAST_DAYS = 180;
 
+    /** {@code docs/API.md} §6 목록 "page/size 기본 0/20" - 상한 명시는 없지만 PharmacyServiceImpl 선례를 따른다. */
+    private static final int MAX_PAGE_SIZE = 50;
+
     private final PharmacyRepository pharmacyRepository;
     private final DrugRepository drugRepository;
     private final AppUserRepository appUserRepository;
     private final UploadedFileRepository uploadedFileRepository;
     private final PriceReportRepository priceReportRepository;
+    private final PriceReportQueryRepository priceReportQueryRepository;
     private final PriceStatService priceStatService;
 
     @Override
@@ -98,6 +109,38 @@ public class PriceReportServiceImpl implements PriceReportService {
         Optional<PharmacyDrugPriceStat> stat = priceStatService.recalculate(request.pharmacyId(), request.drugId());
 
         return toResponse(report, outlier.warning(), stat.orElse(null));
+    }
+
+    /**
+     * T-28. {@code pharmacyId}/{@code drugId} 존재성은 검증하지 않는다 -
+     * {@code PharmacyServiceImpl.getPriceHistory}와 동일한 이유로, 존재하지 않는
+     * 조합이면 자연스럽게 빈 목록이 나온다. {@code userId}가 {@code null}이면
+     * {@code mine} 필터를 걸지 않는다(컨트롤러가 {@code mine=true}일 때만 채워 넘긴다).
+     */
+    @Override
+    public PageResponse<PriceReportListItemResponse> list(Long pharmacyId, Long drugId, Long userId, int page, int size) {
+        int clampedSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        int safePage = Math.max(page, 0);
+        long offset = (long) safePage * clampedSize;
+
+        List<PriceReportRow> rows = priceReportQueryRepository.search(pharmacyId, drugId, userId, clampedSize, offset);
+        long totalElements = priceReportQueryRepository.count(pharmacyId, drugId, userId);
+
+        List<PriceReportListItemResponse> content = rows.stream().map(this::toListItem).toList();
+        return PageResponse.of(content, safePage, clampedSize, totalElements);
+    }
+
+    private PriceReportListItemResponse toListItem(PriceReportRow row) {
+        PriceReportListItemResponse.Reporter reporter = row.getReporterNickname() == null
+            ? null
+            : new PriceReportListItemResponse.Reporter(row.getReporterNickname());
+        return new PriceReportListItemResponse(
+            row.getId(),
+            new PriceReportListItemResponse.Pharmacy(row.getPharmacyId(), row.getPharmacyName()),
+            new PriceReportListItemResponse.Drug(row.getDrugId(), row.getDrugDisplayName(), row.getDrugPackageUnit()),
+            row.getPrice(), row.getPurchasedAt(), reporter,
+            ReportSource.valueOf(row.getSource()), ReportStatus.valueOf(row.getStatus()),
+            row.isFlagged(), row.isHasReceipt(), row.getCreatedAt().atZone(ZoneId.systemDefault()).toOffsetDateTime());
     }
 
     private LocalDate resolvePurchasedAt(LocalDate purchasedAt) {

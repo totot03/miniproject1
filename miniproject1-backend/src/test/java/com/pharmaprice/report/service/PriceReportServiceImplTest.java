@@ -26,6 +26,7 @@ import com.pharmaprice.report.exception.DrugNotFoundException;
 import com.pharmaprice.report.exception.DrugNotOtcException;
 import com.pharmaprice.report.exception.InvalidDateRangeException;
 import com.pharmaprice.report.exception.PharmacyNotFoundException;
+import com.pharmaprice.report.repository.PriceReportQueryRepository;
 import com.pharmaprice.report.repository.PriceReportRepository;
 import com.pharmaprice.report.repository.UploadedFileRepository;
 import java.time.LocalDate;
@@ -51,6 +52,7 @@ class PriceReportServiceImplTest {
     private final AppUserRepository appUserRepository = mock(AppUserRepository.class);
     private final UploadedFileRepository uploadedFileRepository = mock(UploadedFileRepository.class);
     private final PriceReportRepository priceReportRepository = mock(PriceReportRepository.class);
+    private final PriceReportQueryRepository priceReportQueryRepository = mock(PriceReportQueryRepository.class);
     private final PriceStatService priceStatService = mock(PriceStatService.class);
 
     private PriceReportServiceImpl service;
@@ -62,7 +64,7 @@ class PriceReportServiceImplTest {
     void setUp() {
         service = new PriceReportServiceImpl(
             pharmacyRepository, drugRepository, appUserRepository, uploadedFileRepository,
-            priceReportRepository, priceStatService);
+            priceReportRepository, priceReportQueryRepository, priceStatService);
 
         pharmacy = Pharmacy.builder().id(PHARMACY_ID).name("가온약국").lat(37.5).lng(127.0).build();
         otcDrug = Drug.builder().id(DRUG_ID).name("타이레놀정500밀리그람").displayName("타이레놀 500mg")

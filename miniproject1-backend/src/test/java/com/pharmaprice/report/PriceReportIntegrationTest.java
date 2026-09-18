@@ -178,4 +178,64 @@ class PriceReportIntegrationTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + accessToken))
             .andExpect(jsonPath("$.reportCount").value(1));
     }
+
+    // --- T-28 GET /api/v1/price-reports ---
+
+    @Test
+    void 목록조회는_비로그인이어도_200이고_reporter는_닉네임만_노출한다() throws Exception {
+        String accessToken = signupAndLogin();
+        mockMvc.perform(reportRequest(accessToken, pharmacy.getId(), drug.getId(), 2800))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/price-reports"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].reporter.nickname").value("제보자"))
+            .andExpect(jsonPath("$.content[0].reporter.id").doesNotExist())
+            .andExpect(jsonPath("$.content[0].reporter.email").doesNotExist())
+            .andExpect(jsonPath("$.content[0].hasReceipt").isBoolean())
+            .andExpect(jsonPath("$.content[0].pharmacy.name").value(pharmacy.getName()))
+            .andExpect(jsonPath("$.content[0].drug.displayName").value(drug.getDisplayName()));
+    }
+
+    @Test
+    void mine_true를_비로그인으로_호출하면_401() throws Exception {
+        mockMvc.perform(get("/api/v1/price-reports").param("mine", "true"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+    }
+
+    @Test
+    void mine_true는_본인제보만_반환한다() throws Exception {
+        String ownerToken = signupAndLogin();
+        String otherToken = signupAndLogin();
+        mockMvc.perform(reportRequest(ownerToken, pharmacy.getId(), drug.getId(), 2800))
+            .andExpect(status().isCreated());
+
+        Drug otherDrug = drugRepository.save(TestFixtures.drug());
+        mockMvc.perform(reportRequest(otherToken, pharmacy.getId(), otherDrug.getId(), 3000))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/price-reports")
+                .param("mine", "true")
+                .header("Authorization", "Bearer " + ownerToken))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(1))
+            .andExpect(jsonPath("$.content[0].price").value(2800));
+    }
+
+    @Test
+    void pharmacyId_필터로_다른약국제보는_제외된다() throws Exception {
+        String accessToken = signupAndLogin();
+        // Region.code가 고정값("11680")이라 같은 테스트에서 두 번 저장하면 PK 충돌 -
+        // region 없는 약국으로 대체한다(Pharmacy.region은 optional).
+        Pharmacy otherPharmacy = pharmacyRepository.save(Pharmacy.builder()
+            .name("다른약국").lat(37.5).lng(127.0).build());
+
+        mockMvc.perform(reportRequest(accessToken, pharmacy.getId(), drug.getId(), 2800))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/price-reports").param("pharmacyId", String.valueOf(otherPharmacy.getId())))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalElements").value(0));
+    }
 }
