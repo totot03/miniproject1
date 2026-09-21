@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { EmptyState } from "@/components/common/EmptyState";
 import { ErrorState } from "@/components/common/ErrorState";
+import { MapSkeleton } from "@/components/common/MapSkeleton";
 import {
   Dialog,
   DialogContent,
@@ -69,10 +70,20 @@ export function PharmacyMapPickerDialog({
   const overlaysRef = useRef<kakao.maps.CustomOverlay[]>([]);
   const onSelectRef = useRef(onSelect);
   const [sdkReady, setSdkReady] = useState(false);
+  const [sdkFailed, setSdkFailed] = useState(false);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
+
+  // components/location/NearbyPharmacyMap.tsx와 같은 이유 — 스크립트는
+  // 로드됐지만(도메인 미등록 등) kakao.maps.load 콜백이 끝내 안 불리는
+  // 경우를 대비한 안전망이다. 다이얼로그가 열려 있을 때만 잰다.
+  useEffect(() => {
+    if (!open || !appKey || sdkReady) return;
+    const timer = setTimeout(() => setSdkFailed(true), 8000);
+    return () => clearTimeout(timer);
+  }, [open, appKey, sdkReady]);
 
   const query = useQuery({
     queryKey: ["pharmacies", "map-picker", center.lat, center.lng],
@@ -160,7 +171,7 @@ export function PharmacyMapPickerDialog({
           <DialogDescription>마커를 클릭하면 그 약국이 선택됩니다.</DialogDescription>
         </DialogHeader>
 
-        {!appKey ? (
+        {!appKey || sdkFailed ? (
           <ErrorState
             fallbackMessage="지도를 불러올 수 없습니다. 위 검색창에서 약국 이름으로 찾아주세요."
           />
@@ -176,12 +187,11 @@ export function PharmacyMapPickerDialog({
               src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`}
               strategy="afterInteractive"
               onLoad={() => window.kakao.maps.load(() => setSdkReady(true))}
+              onError={() => setSdkFailed(true)}
             />
             <div ref={containerRef} className="h-full w-full" />
             {!sdkReady ? (
-              <div className="bg-muted/30 text-muted-foreground absolute inset-0 flex items-center justify-center text-xs">
-                지도를 불러오는 중…
-              </div>
+              <MapSkeleton />
             ) : pharmacies.length === 0 && !query.isLoading ? (
               <div className="absolute inset-x-0 bottom-2 flex justify-center">
                 <EmptyState

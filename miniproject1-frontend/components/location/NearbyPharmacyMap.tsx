@@ -4,6 +4,8 @@ import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { MapSkeleton } from "@/components/common/MapSkeleton";
+
 export interface NearbyMapPharmacy {
   id: number;
   name: string;
@@ -59,6 +61,18 @@ export function NearbyPharmacyMap({
     if (!appKey) onLoadError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // SDK 스크립트 자체는 로드됐지만(예: 카카오 개발자 콘솔에 등록되지 않은
+  // 도메인) kakao.maps.load 콜백이 끝내 안 불려 ready가 영영 false로 남는
+  // 경우가 있다 — 이때 Script의 onError는 안 불리므로(네트워크 요청 자체는
+  // 성공) 스켈레톤이 무한 로딩으로 남는다. 일정 시간 안에 준비되지 않으면
+  // 같은 실패 경로로 보내 상위가 명확한 실패 상태를 보여줄 수 있게 한다.
+  useEffect(() => {
+    if (!appKey || ready) return;
+    const timer = setTimeout(onLoadError, 8000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, appKey]);
 
   // React(Strict Mode) 개발 모드의 mount→cleanup→mount 재시뮬레이션 대응 —
   // components/pharmacy-map.tsx와 같은 이유로 cleanup에서 mapRef를 비운다.
@@ -146,11 +160,7 @@ export function NearbyPharmacyMap({
         onError={onLoadError}
       />
       <div ref={containerRef} className="h-full w-full" />
-      {!ready ? (
-        <div className="bg-muted/30 text-muted-foreground absolute inset-0 flex items-center justify-center text-xs">
-          지도를 불러오는 중…
-        </div>
-      ) : null}
+      {!ready ? <MapSkeleton /> : null}
     </div>
   );
 }

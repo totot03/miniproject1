@@ -3,6 +3,7 @@
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
+import { MapSkeleton } from "@/components/common/MapSkeleton";
 import { formatNumber } from "@/lib/format";
 
 export interface MapPharmacy {
@@ -146,6 +147,16 @@ export function PharmacyMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // components/location/NearbyPharmacyMap.tsx와 같은 이유 — 스크립트는
+  // 로드됐지만(도메인 미등록 등) kakao.maps.load 콜백이 끝내 안 불리는
+  // 경우를 대비한 안전망이다.
+  useEffect(() => {
+    if (!appKey || ready) return;
+    const timer = setTimeout(onLoadError, 8000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, appKey]);
+
   // React(Strict Mode) 개발 모드는 mount → cleanup → mount를 한 번 더 시뮬레이션한다.
   // cleanup에서 mapRef를 반드시 비워야 두 번째 mount가 새 지도를 만들고, 낡은 지도
   // 인스턴스가 감춰진 컨테이너를 붙든 채 남는 일이 없다.
@@ -270,11 +281,7 @@ export function PharmacyMap({
         onError={onLoadError}
       />
       <div ref={containerRef} className="h-full w-full" />
-      {!ready ? (
-        <div className="bg-muted/30 text-muted-foreground absolute inset-0 flex items-center justify-center text-xs">
-          지도를 불러오는 중…
-        </div>
-      ) : null}
+      {!ready ? <MapSkeleton /> : null}
     </div>
   );
 }
