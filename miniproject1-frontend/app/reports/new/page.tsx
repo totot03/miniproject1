@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, apiFetch } from "@/lib/api";
 import { formatNumber, todayInKST } from "@/lib/format";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
@@ -49,8 +50,39 @@ function parsePriceInput(raw: string): { numeric: number; display: string } {
  * refresh까지 실패하는 경우(세션이 진짜 끊긴 경우)는 optimistic 체크로는
  * 못 잡으므로, 제출 시 401을 직접 감지해 로그인으로 보낸다 — 이때 입력값이
  * 날아가지 않도록 reportDraftSlice(Redux)에 계속 미러링해 둔다.
+ *
+ * useSearchParams()를 쓰는 컴포넌트는 Suspense 경계 안에 있어야 한다 —
+ * 없으면 정적 빌드(`next build`)가 "useSearchParams() should be wrapped in
+ * a suspense boundary"로 실패한다(app/reports/new/page 프리렌더 시 실측).
+ * 폼 전체를 클라이언트 컴포넌트로 두되, 기본 export는 얇은 Suspense
+ * 래퍼로 분리한다.
  */
 export default function ReportNewPage() {
+  return (
+    <Suspense fallback={<ReportFormSkeleton />}>
+      <ReportNewForm />
+    </Suspense>
+  );
+}
+
+function ReportFormSkeleton() {
+  return (
+    <div className="mx-auto max-w-lg space-y-6 px-4 py-8">
+      <div className="space-y-1">
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-4 w-full max-w-xs" />
+      </div>
+      <div className="space-y-5">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-9 w-full" />
+      </div>
+    </div>
+  );
+}
+
+function ReportNewForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
