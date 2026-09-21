@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/common/EmptyState";
+import { SearchLocationBar } from "@/components/location/SearchLocationBar";
 import { PharmacyResultCard } from "@/components/PharmacyResultCard";
 import { SearchResultsWithMap } from "@/components/SearchResultsWithMap";
 import { SortToggle, type SearchRadius, type SearchSort } from "@/components/SortToggle";
@@ -58,7 +59,7 @@ export default async function SearchPage(props: PageProps<"/search">) {
 
   const hasLocation = Boolean((lat && lng) || regionCode);
 
-  if (!drugId || !hasLocation) {
+  if (!drugId) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
         <EmptyState
@@ -69,6 +70,21 @@ export default async function SearchPage(props: PageProps<"/search">) {
               <Link href="/">홈으로</Link>
             </Button>
           }
+        />
+      </div>
+    );
+  }
+
+  // 위치 설정(현재 위치 사용/지역 선택)은 이 화면(약 검색 창)이 전담한다 —
+  // 헤더의 전역 LocationIndicator를 없애고 여기로 옮겼다. drugId만 있고
+  // 위치가 아직 없는 경우에도 이 바를 보여줘 바로 위치를 고를 수 있게 한다.
+  if (!hasLocation) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+        <SearchLocationBar />
+        <EmptyState
+          title="위치를 설정해주세요"
+          description="현재 위치를 사용하거나 지역을 선택하면 근처 약국을 검색합니다."
         />
       </div>
     );
@@ -99,6 +115,8 @@ export default async function SearchPage(props: PageProps<"/search">) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+      <SearchLocationBar />
+
       <div className="space-y-1">
         <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
           {data.drug?.displayName ?? "검색 결과"}

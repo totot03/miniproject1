@@ -1,16 +1,20 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import { Provider as ReduxProvider } from "react-redux";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ReactElement } from "react";
 
 import SearchPage from "@/app/search/page";
 import { apiFetch } from "@/lib/api";
+import { makeStore } from "@/lib/store";
 import type { components } from "@/types/api";
 
 type SearchResponse = components["schemas"]["SearchResponse"];
 
-// SortToggle이 내부에서 next/navigation을 쓰므로 다른 테스트와 같은 방식으로 목킹한다.
+// SortToggle·SearchLocationBar가 내부에서 next/navigation을 쓰므로 다른 테스트와 같은 방식으로 목킹한다.
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => "/search",
@@ -35,19 +39,64 @@ function renderPage(searchParams: Record<string, string>) {
   });
 }
 
+/**
+ * SearchLocationBar가 항상 RegionPicker를 함께 렌더링하고, Dialog가 닫혀
+ * 있어도 내부 useQuery(['regions'])는 마운트 시점에 그대로 실행된다
+ * (DrugAutocomplete.test.tsx와 같은 이유). 그래서 apiFetch 목은 경로로
+ * 분기해야 /api/v1/search 호출과 /api/v1/regions 호출을 섞지 않는다.
+ */
+function setupApiFetchMock(searchResponse: SearchResponse) {
+  mockedApiFetch.mockImplementation((path: string) => {
+    if (path.startsWith("/api/v1/regions")) {
+      return Promise.resolve([]);
+    }
+    if (path.startsWith("/api/v1/search")) {
+      return Promise.resolve(searchResponse);
+    }
+    return Promise.reject(new Error(`이 테스트에서 예상하지 못한 경로: ${path}`));
+  });
+}
+
+/** SearchPage(서버 컴포넌트) 결과를 SearchLocationBar가 필요로 하는 Redux/Query 경계로 감싼다. */
+function renderWithProviders(element: ReactElement) {
+  const store = makeStore();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: 0 } },
+  });
+  return render(
+    <ReduxProvider store={store}>
+      <QueryClientProvider client={queryClient}>{element}</QueryClientProvider>
+    </ReduxProvider>,
+  );
+}
+
 describe("SearchPage", () => {
   afterEach(() => {
     cleanup();
     vi.clearAllMocks();
   });
 
-  it("drugId나 위치가 없으면 홈으로 유도하는 안내를 보여주고 API를 호출하지 않는다", async () => {
+  it("drugId가 없으면 홈으로 유도하는 안내를 보여주고 API를 호출하지 않는다", async () => {
     render(await renderPage({}));
 
     expect(
       screen.getByText("검색 조건이 올바르지 않습니다"),
     ).toBeInTheDocument();
     expect(mockedApiFetch).not.toHaveBeenCalled();
+  });
+
+  it("drugId는 있는데 위치가 없으면 위치 설정 바와 안내를 보여주고 검색 API는 호출하지 않는다", async () => {
+    setupApiFetchMock({ results: [] });
+    renderWithProviders(await renderPage({ drugId: "1" }));
+
+    expect(screen.getByText("위치를 설정해주세요")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "현재 위치 사용" }),
+    ).toBeInTheDocument();
+    const searchCalls = mockedApiFetch.mock.calls.filter(([path]) =>
+      String(path).startsWith("/api/v1/search"),
+    );
+    expect(searchCalls).toHaveLength(0);
   });
 
   it("결과가 있으면 요약·카드·dataSource 고지를 보여주고 올바른 쿼리로 호출한다", async () => {
@@ -75,12 +124,14 @@ describe("SearchPage", () => {
         },
       ],
     };
-    mockedApiFetch.mockResolvedValueOnce(response);
+    setupApiFetchMock(response);
 
-    render(await renderPage(BASE_QUERY));
+    renderWithProviders(await renderPage(BASE_QUERY));
 
-    const calledUrl = mockedApiFetch.mock.calls[0][0] as string;
-    expect(calledUrl.startsWith("/api/v1/search?")).toBe(true);
+    const searchCalls = mockedApiFetch.mock.calls.filter(([path]) =>
+      String(path).startsWith("/api/v1/search"),
+    );
+    const calledUrl = searchCalls[0][0] as string;
     expect(calledUrl).toContain("drugId=1");
     expect(calledUrl).toContain("lat=37.5");
     expect(calledUrl).toContain("lng=127.0");
@@ -101,27 +152,31 @@ describe("SearchPage", () => {
       results: [],
       suggestion: { type: "EXPAND_RADIUS", recommendedRadius: 5000, estimatedCount: 12 },
     };
-    mockedApiFetch.mockResolvedValueOnce(response);
+    setupApiFetchMock(response);
 
-    render(await renderPage(BASE_QUERY));
+    renderWithProviders(await renderPage(BASE_QUERY));
 
     const link = screen.getByRole("link", { name: "반경 넓혀서 다시 검색" });
     expect(link.getAttribute("href")).toContain("radius=5000");
   });
 
   it("radius/sort가 허용값 밖이면 기본값(2000/SCORE)으로 보정해 호출한다", async () => {
-    const response: SearchResponse = { results: [], summary: { resultCount: 0 } };
-    mockedApiFetch.mockResolvedValueOnce(response);
+    setupApiFetchMock({ results: [], summary: { resultCount: 0 } });
 
-    await renderPage({
-      drugId: "1",
-      lat: "37.5",
-      lng: "127",
-      radius: "9999",
-      sort: "BOGUS",
-    });
+    renderWithProviders(
+      await renderPage({
+        drugId: "1",
+        lat: "37.5",
+        lng: "127",
+        radius: "9999",
+        sort: "BOGUS",
+      }),
+    );
 
-    const calledUrl = mockedApiFetch.mock.calls[0][0] as string;
+    const searchCalls = mockedApiFetch.mock.calls.filter(([path]) =>
+      String(path).startsWith("/api/v1/search"),
+    );
+    const calledUrl = searchCalls[0][0] as string;
     expect(calledUrl).toContain("radius=2000");
     expect(calledUrl).toContain("sort=SCORE");
   });

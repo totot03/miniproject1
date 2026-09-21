@@ -7,7 +7,6 @@ import { Search } from "lucide-react";
 
 import { EmptyState } from "@/components/common/EmptyState";
 import { RegionPicker } from "@/components/location/RegionPicker";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -18,18 +17,6 @@ import type { components } from "@/types/api";
 
 type DrugSummary = components["schemas"]["DrugSummaryResponse"];
 type DrugPage = components["schemas"]["PageResponseDrugSummaryResponse"];
-
-/** 검색 API 호출 없이 바로 보여줄 인기 약품(docs/ROADMAP.md T-17 1번, 6~8개). 실제 존재 여부와 무관하게 입력창을 채우는 프리셋일 뿐이다. */
-const POPULAR_DRUG_CHIPS = [
-  "타이레놀",
-  "게보린",
-  "판콜에이",
-  "베아제",
-  "부루펜",
-  "챔프",
-  "판피린",
-  "훼스탈",
-] as const;
 
 /** 자동완성으로 넘어가는 최소 글자 수(docs/ROADMAP.md T-17 2번) — 1글자 검색은 후보가 너무 많아 의미가 없다. */
 const MIN_QUERY_LENGTH = 2;
@@ -50,8 +37,8 @@ function optionId(listboxId: string, drugId: number): string {
 }
 
 /**
- * 홈 화면 검색 섹션 전체(입력창 + 인기 약품 칩 + 자동완성 드롭다운)를 소유하는
- * 컴포넌트 (docs/ROADMAP.md T-17).
+ * 홈 화면 검색 섹션 전체(입력창 + 자동완성 드롭다운)를 소유하는 컴포넌트
+ * (docs/ROADMAP.md T-17).
  *
  * ARIA 1.2 콤보박스 패턴을 직접 구현한다 — shadcn Command(cmdk)는 명령
  * 팔레트용 포커스 모델(roving tabindex)을 쓰지만, 여기서 요구되는 건
@@ -132,8 +119,8 @@ export function DrugAutocomplete({ onSelect }: DrugAutocompleteProps = {}) {
     if (locationState.status === "idle") {
       // useUserLocation의 진행 상태(idle/requesting/denied/unavailable)는
       // 훅 인스턴스마다 따로 관리되는 로컬 state라(locationSlice.ts 참고),
-      // 헤더(LocationIndicator)가 이미 GPS를 요청했더라도 이 컴포넌트의
-      // 훅 인스턴스는 그 사실을 모른다 — 직접 요청해야 한다.
+      // 다른 컴포넌트(NearbyPharmacies 등)가 이미 GPS를 요청했더라도 이
+      // 컴포넌트의 훅 인스턴스는 그 사실을 모른다 — 직접 요청해야 한다.
       requestGpsLocation(() => setRegionPickerOpen(true));
     } else if (locationState.status === "denied" || locationState.status === "unavailable") {
       setRegionPickerOpen(true);
@@ -154,13 +141,6 @@ export function DrugAutocomplete({ onSelect }: DrugAutocompleteProps = {}) {
     // navigate는 router에서 파생된 안정적인 함수라 의존성에서 제외해도 무방하다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationState]);
-
-  function handleChipClick(label: string) {
-    setText(label);
-    setIsOpen(true);
-    setActiveIndex(-1);
-    inputRef.current?.focus();
-  }
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (!showDropdown || items.length === 0) {
@@ -276,20 +256,6 @@ export function DrugAutocomplete({ onSelect }: DrugAutocompleteProps = {}) {
             )}
           </div>
         ) : null}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {POPULAR_DRUG_CHIPS.map((label) => (
-          <Button
-            key={label}
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => handleChipClick(label)}
-          >
-            {label}
-          </Button>
-        ))}
       </div>
 
       <RegionPicker
