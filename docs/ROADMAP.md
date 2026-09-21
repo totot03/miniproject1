@@ -1,14 +1,14 @@
 # ROADMAP — 태스크 분해 (Shrimp Task Manager 용)
 
-| 항목 | 내용 |
-|---|---|
-| 문서 버전 | v3.2 (폴더명 소문자화 · Windows 환경 주의) |
-| 태스크 관리 | [mcp-shrimp-task-manager](https://github.com/cjo4m06/mcp-shrimp-task-manager) |
-| 총 태스크 | 37 (P0 27 / P1 6 / P2 4) |
-| 진행 방식 | **팀 프로젝트지만 구현은 1인 단위.** 각자 자기 Claude Code로 전체를 처음부터 끝까지 만든다 |
-| 실행 환경 | 로컬 PostgreSQL 17 + `./mvnw spring-boot:run` + `npm run dev` (**Docker 미사용**) |
-| 프론트 상태 | TanStack Query(서버) + Redux Toolkit(클라이언트) — 경계는 [PRD.md](./PRD.md) §4.2 |
-| 관련 문서 | [PRD.md](./PRD.md) · [DATABASE.md](./DATABASE.md) · [API.md](./API.md) |
+| 항목        | 내용                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------ |
+| 문서 버전   | v3.2 (폴더명 소문자화 · Windows 환경 주의)                                                 |
+| 태스크 관리 | [mcp-shrimp-task-manager](https://github.com/cjo4m06/mcp-shrimp-task-manager)              |
+| 총 태스크   | 37 (P0 27 / P1 6 / P2 4)                                                                   |
+| 진행 방식   | **팀 프로젝트지만 구현은 1인 단위.** 각자 자기 Claude Code로 전체를 처음부터 끝까지 만든다 |
+| 실행 환경   | 로컬 PostgreSQL 17 + `./mvnw spring-boot:run` + `npm run dev` (**Docker 미사용**)          |
+| 프론트 상태 | TanStack Query(서버) + Redux Toolkit(클라이언트) — 경계는 [PRD.md](./PRD.md) §4.2          |
+| 관련 문서   | [PRD.md](./PRD.md) · [DATABASE.md](./DATABASE.md) · [API.md](./API.md)                     |
 
 ---
 
@@ -18,15 +18,15 @@
 
 각 태스크 카드는 `split_tasks` 스키마와 1:1로 대응한다.
 
-| 카드 항목 | Shrimp 필드 | 비고 |
-|---|---|---|
-| 제목 `T-xx. 이름` | `name` | 100자 이내 |
-| **목적** | `description` | 10자 이상 |
-| **구현 가이드** | `implementationGuide` | |
-| **선행 태스크** | `dependencies` | 태스크 **이름** 문자열 배열 |
-| **관련 파일** | `relatedFiles` | `type`: `CREATE` \| `TO_MODIFY` \| `REFERENCE` |
-| **완료 판정** | `verificationCriteria` | |
-| **메모** | `notes` | |
+| 카드 항목         | Shrimp 필드            | 비고                                           |
+| ----------------- | ---------------------- | ---------------------------------------------- |
+| 제목 `T-xx. 이름` | `name`                 | 100자 이내                                     |
+| **목적**          | `description`          | 10자 이상                                      |
+| **구현 가이드**   | `implementationGuide`  |                                                |
+| **선행 태스크**   | `dependencies`         | 태스크 **이름** 문자열 배열                    |
+| **관련 파일**     | `relatedFiles`         | `type`: `CREATE` \| `TO_MODIFY` \| `REFERENCE` |
+| **완료 판정**     | `verificationCriteria` |                                                |
+| **메모**          | `notes`                |                                                |
 
 ### 0.2 투입 순서
 
@@ -49,15 +49,15 @@
 
 ## 1. 슬라이스 구성
 
-| 슬라이스 | 끝나면 되는 것 | 태스크 | 예상 |
-|---|---|---|---|
-| **FS-0** 셋업 | 빈 프로젝트가 로컬에서 뜬다 | T-01 ~ T-04 | 2d |
-| **FS-1** 데이터 | DB에 약국·약품·가격 3,000건이 들어있다 | T-05 ~ T-08 | 3d |
-| **FS-2** 최저가 검색 | **검색창에 약 이름 → 최저가 약국 목록** | T-09 ~ T-18 | 5.75d |
-| **FS-3** 약국 상세 | 약국을 눌러 가격표·이력·지도를 본다 | T-19 ~ T-22 | 2.5d |
-| **FS-4** 인증 + 제보 | 로그인하고 가격을 제보하면 순위가 바뀐다 | T-23 ~ T-30 | 4.5d |
-| **FS-5** 관리자 (P2) | 지역별 통계와 이상치 제보 관리 | T-31 ~ T-34 | 2.5d |
-| **FS-6** 마감 | 예외 처리, 반응형, README | T-35 ~ T-37 | 1.5d |
+| 슬라이스             | 끝나면 되는 것                           | 태스크      | 예상  |
+| -------------------- | ---------------------------------------- | ----------- | ----- |
+| **FS-0** 셋업        | 빈 프로젝트가 로컬에서 뜬다              | T-01 ~ T-04 | 2d    |
+| **FS-1** 데이터      | DB에 약국·약품·가격 3,000건이 들어있다   | T-05 ~ T-08 | 3d    |
+| **FS-2** 최저가 검색 | **검색창에 약 이름 → 최저가 약국 목록**  | T-09 ~ T-18 | 5.75d |
+| **FS-3** 약국 상세   | 약국을 눌러 가격표·이력·지도를 본다      | T-19 ~ T-22 | 2.5d  |
+| **FS-4** 인증 + 제보 | 로그인하고 가격을 제보하면 순위가 바뀐다 | T-23 ~ T-30 | 4.5d  |
+| **FS-5** 관리자 (P2) | 지역별 통계와 이상치 제보 관리           | T-31 ~ T-34 | 2.5d  |
+| **FS-6** 마감        | 예외 처리, 반응형, README                | T-35 ~ T-37 | 1.5d  |
 
 ### 의존성 그래프
 
@@ -117,6 +117,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **구현 가이드**
 
 1. 루트 구조를 다음과 같이 만든다.
+
    ```
    miniProject1/
    ├─ PRD.md
@@ -135,6 +136,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    └─ tools/seed-generator/      공공데이터 → 시드 SQL 변환 (Python)
        └─ data/                  원본 CSV
    ```
+
    ⚠️ **두 모듈 폴더명은 반드시 소문자 + 하이픈이다.** `create-next-app .` 은 폴더명을 그대로 `package.json` 의 `name` 으로 쓰는데, **npm은 패키지명에 대문자를 허용하지 않는다.** `miniProject1_frontEnd` 같은 이름이면 생성 단계에서 바로 거부된다. 루트 폴더(`miniProject1`)는 패키지가 아니므로 상관없다.
 
    **문서 4종은 루트에 평평하게 둔다** (`docs/` 하위 아님). 태스크 카드의 `relatedFiles` 경로도 이 기준이다.
@@ -142,6 +144,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    > **[실행 시 반영된 결정]** 문서 4종은 루트가 아니라 `docs/` 아래 유지한다. 이 문서를 포함한 각 태스크 카드에서 `PRD.md`/`DATABASE.md`/`API.md`/`ROADMAP.md`로 언급되는 경로는 전부 `docs/` 하위로 읽는다.
 
 2. 백엔드 패키지 구조를 도메인 기준으로 고정한다.
+
    ```
    com.pharmaprice
      ├─ common          예외, 응답 포맷, 설정
@@ -152,9 +155,11 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
      ├─ recommendation  거리, 통계, Score, 검색
      └─ admin           관리자
    ```
+
    각 도메인 안은 `controller` / `service` / `repository` / `domain` / `dto`.
 
 3. 프론트 구조를 고정한다.
+
    ```
    miniproject1-frontend/
      ├─ app/            라우트 (App Router)
@@ -190,6 +195,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** 없음
 
 **관련 파일**
+
 - `README.md` — `CREATE` — 프로젝트 개요 (T-37에서 완성)
 - `.editorconfig` — `CREATE` — 에디터 공통 설정
 - `.gitignore` — `CREATE` — 무시 목록
@@ -197,6 +203,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 - `PRD.md` — `REFERENCE` — 요구사항 원본
 
 **완료 판정**
+
 - 위 디렉터리가 모두 존재한다
 - `.env` 가 git에 추적되지 않고 `.mvn/` 은 추적된다
 - `.env.example` 만 보고 필요한 키를 전부 파악할 수 있다
@@ -222,6 +229,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    - **Linux**: 배포판 패키지 또는 PGDG 저장소.
 
 2. 데이터베이스와 계정을 만든다. `.env.example` 의 값과 일치시킨다.
+
    ```sql
    CREATE USER pharmaprice WITH PASSWORD 'changeme';
    CREATE DATABASE pharmaprice OWNER pharmaprice ENCODING 'UTF8';
@@ -230,19 +238,23 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    ```
 
 3. **타임존을 `Asia/Seoul` 로 설정한다.**
+
    ```sql
    ALTER DATABASE pharmaprice SET timezone TO 'Asia/Seoul';
    ```
+
    확인: 재접속 후 `SHOW timezone;` 이 `Asia/Seoul`, `SELECT now();` 가 `+09` 오프셋.
    UTC로 두면 한국 시간 오전 9시 이전에 `CURRENT_DATE` 가 전날로 잡혀 중복 제보 방지와 180일 검증이 하루씩 어긋난다 ([DATABASE.md](./DATABASE.md) §8).
 
 4. 확장 설치 권한을 확인한다. `pg_trgm` 은 `V1__init.sql` 이 `CREATE EXTENSION` 으로 설치하는데, **일반 유저는 권한이 없어 실패할 수 있다.** 미리 슈퍼유저로 한 번 실행해 두는 편이 안전하다.
+
    ```sql
    \c pharmaprice postgres
    CREATE EXTENSION IF NOT EXISTS pg_trgm;
    ```
 
 5. 접속을 확인한다.
+
    ```bash
    psql -h localhost -p 5432 -U pharmaprice -d pharmaprice -c "SELECT version();"
    ```
@@ -252,10 +264,12 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-01
 
 **관련 파일**
+
 - `README.md` — `TO_MODIFY` — 로컬 환경 준비 절 추가
 - `.env.example` — `REFERENCE` — DB 접속 정보
 
 **완료 판정**
+
 - `psql` 로 `pharmaprice` DB에 `pharmaprice` 계정으로 접속된다
 - `SHOW timezone;` 이 `Asia/Seoul` 을 반환한다
 - `SELECT * FROM pg_extension WHERE extname = 'pg_trgm';` 이 1행을 반환한다
@@ -285,6 +299,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    > `flyway-database-postgresql` 을 빼먹으면 Flyway가 PostgreSQL을 인식하지 못한다. Flyway 10부터 DB별 모듈이 분리됐다.
 
 3. `application.yml` 을 작성한다.
+
    ```yaml
    spring:
      datasource:
@@ -293,7 +308,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
        password: ${POSTGRES_PASSWORD:changeme}
      jpa:
        hibernate:
-         ddl-auto: validate       # update/create 절대 금지
+         ddl-auto: validate # update/create 절대 금지
        open-in-view: false
        properties:
          hibernate:
@@ -326,9 +341,11 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
        iqr-multiplier: 1.5
        min-samples: 4
    ```
+
    `ddl-auto: validate` 로 두어 Flyway 스키마와 엔티티 불일치를 기동 시점에 잡는다.
 
 4. `recommendation.*` 를 `@ConfigurationProperties` 로 바인딩한다.
+
    ```java
    @ConfigurationProperties(prefix = "recommendation")
    public record RecommendationProperties(
@@ -342,9 +359,11 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
        public record Outlier(double iqrMultiplier, int minSamples) {}
    }
    ```
+
    `@EnableConfigurationProperties(RecommendationProperties.class)` 를 메인 클래스에 붙인다.
 
 5. JVM 타임존을 고정한다. 실행 시 `-Duser.timezone=Asia/Seoul`, 또는 메인 클래스에서:
+
    ```java
    @PostConstruct
    void initTimezone() { TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul")); }
@@ -356,12 +375,14 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-02
 
 **관련 파일**
+
 - `miniproject1-backend/pom.xml` — `CREATE` — 의존성 정의
 - `miniproject1-backend/src/main/resources/application.yml` — `CREATE` — 설정
 - `miniproject1-backend/src/main/java/com/pharmaprice/common/config/RecommendationProperties.java` — `CREATE` — Score 가중치 바인딩
 - `API.md` — `REFERENCE` — 설정 키 목록
 
 **완료 판정**
+
 - `./mvnw spring-boot:run` 으로 기동되고 `/actuator/health` 가 `{"status":"UP"}` 반환
 - `/swagger-ui.html` 이 열린다
 - `RecommendationProperties` 가 yml 값을 실제로 읽는 테스트 통과
@@ -392,6 +413,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    **헤더 하단과 푸터에 고정 고지 배너**를 넣는다 — "본 서비스의 가격은 학습용 예시 데이터입니다" (PRD §9). 모든 페이지에 노출되어야 한다.
 
 4. `lib/api.ts` 에 fetch 래퍼를 만든다.
+
    ```typescript
    export class ApiError extends Error {
      constructor(
@@ -400,14 +422,17 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
        message: string,
        public fieldErrors?: { field: string; reason: string }[],
        public traceId?: string,
-     ) { super(message) }
+     ) {
+       super(message);
+     }
    }
 
    export async function apiFetch<T>(
      path: string,
      init?: RequestInit & { auth?: boolean },
-   ): Promise<T>
+   ): Promise<T>;
    ```
+
    - 베이스 URL은 `process.env.NEXT_PUBLIC_API_BASE_URL`
    - 4xx/5xx면 [API.md](./API.md) §1.2 에러 바디를 파싱해 `ApiError` 로 던진다. **파싱에 실패해도 `ApiError` 를 던진다** (HTML 에러 페이지가 올 수 있다)
    - `204 No Content` 는 `undefined` 를 반환한다. **`res.json()` 을 무조건 호출하면 터진다**
@@ -425,7 +450,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    - `app/providers.tsx` — `QueryClientProvider`(기본 `staleTime: 60_000`, `retry: 1`) + `Provider`(redux)
    - `lib/store.ts` — `configureStore`, 슬라이스 3개 자리만: `locationSlice`(T-16), `authSlice`(T-25), `reportDraftSlice`(T-29)
    - `lib/hooks.ts` — 타입 지정된 `useAppDispatch` / `useAppSelector`
-   ⚠️ **서버 컴포넌트에서 `useAppSelector` 를 부르면 터진다.** Provider 아래의 클라이언트 컴포넌트에서만 쓴다.
+     ⚠️ **서버 컴포넌트에서 `useAppSelector` 를 부르면 터진다.** Provider 아래의 클라이언트 컴포넌트에서만 쓴다.
 
 8. 서버/클라이언트 컴포넌트와 상태 도구의 경계 규칙을 `miniproject1-frontend/README.md` 에 적는다 ([PRD.md](./PRD.md) §4.2 표를 그대로 옮긴다).
    - 초기 렌더 서버 데이터 → **서버 컴포넌트 fetch**
@@ -437,6 +462,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-01
 
 **관련 파일**
+
 - `miniproject1-frontend/app/layout.tsx` — `CREATE` — 루트 레이아웃 + 고지 배너
 - `miniproject1-frontend/lib/api.ts` — `CREATE` — API 클라이언트
 - `miniproject1-frontend/lib/format.ts` — `CREATE` — 포맷 유틸
@@ -447,6 +473,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 - `API.md` — `REFERENCE` — 에러 포맷
 
 **완료 판정**
+
 - `npm run dev` 로 레이아웃이 렌더링되고 고지 배너가 모든 페이지에 보인다
 - `apiFetch` 단위 테스트 4종 통과 — 정상 / JSON 에러 / 비-JSON 에러 / 204
 - Provider로 감싼 클라이언트 컴포넌트에서 `useAppSelector` 가 동작하고, 서버 컴포넌트에는 쓰이지 않는다
@@ -459,7 +486,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 
 # FS-1. 데이터
 
-## T-05. DB 스키마 마이그레이션 작성 (V1__init.sql)
+## T-05. DB 스키마 마이그레이션 작성 (V1\_\_init.sql)
 
 **우선순위** P0 · **예상** 0.5d
 
@@ -482,6 +509,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    - `idx_stat_drug_price` — 검색 경로
 
 5. 중복 제보 방지용 부분 유니크 인덱스를 만든다.
+
    ```sql
    CREATE UNIQUE INDEX uq_report_user_pair_day
      ON price_report (
@@ -490,6 +518,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
      )
      WHERE user_id IS NOT NULL AND status = 'ACTIVE';
    ```
+
    ⚠️ 표현식을 `(created_at::date)` 로 쓰면 **인덱스 생성이 실패한다.** `timestamptz → date` 캐스트는 세션 `TimeZone` 에 의존해 `STABLE` 이고, PostgreSQL 인덱스 표현식은 `IMMUTABLE` 만 받는다.
 
 6. `CHECK (price BETWEEN 100 AND 200000)` 등 제약을 DB 레벨에도 건다. 애플리케이션 검증만 믿지 않는다.
@@ -497,10 +526,12 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-03
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/resources/db/migration/V1__init.sql` — `CREATE` — 초기 스키마
 - `DATABASE.md` — `REFERENCE` — §3 테이블 정의
 
 **완료 판정**
+
 - 빈 DB에 Flyway 마이그레이션이 에러 없이 적용된다 (특히 `uq_report_user_pair_day` 생성 성공)
 - `\d+` 로 8개 테이블과 모든 인덱스가 확인된다
 - `price` 에 `50` 을 INSERT하면 CHECK 제약으로 거부된다
@@ -530,6 +561,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
    - `FlagReason` (OUTLIER_HIGH, OUTLIER_LOW, DUPLICATE, MANUAL)
 
 3. `pharmacy.business_hours` 는 Hibernate 6 기본 지원으로 매핑한다. 별도 컨버터 불필요.
+
    ```java
    @JdbcTypeCode(SqlTypes.JSON)
    @Column(columnDefinition = "jsonb")
@@ -557,12 +589,14 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-05
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/*/domain/` — `CREATE` — 엔티티
 - `miniproject1-backend/src/main/java/com/pharmaprice/*/repository/` — `CREATE` — 리포지토리
 - `miniproject1-backend/src/test/java/com/pharmaprice/AbstractIntegrationTest.java` — `CREATE` — 테스트 베이스
 - `DATABASE.md` — `REFERENCE` — §3 컬럼 타입, §7 JPA 주의점
 
 **완료 판정**
+
 - `ddl-auto: validate` 로 기동 성공 (엔티티-스키마 불일치 0)
 - 각 엔티티 저장·조회 테스트 통과
 - `business_hours` JSONB 가 `Map` 으로 왕복 변환된다
@@ -580,8 +614,8 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **구현 가이드**
 
 1. 데이터를 확보한다.
-   - 약국: [국립중앙의료원_전국 약국 정보 조회 서비스](https://www.data.go.kr/data/15000576/openapi.do) 또는 [심평원_전국 병의원 및 약국 현황](https://www.data.go.kr/data/15051059/fileData.do) (파일 데이터가 다루기 쉽다)
-   - 의약품: [식약처_의약품개요정보(e약은요)](https://www.data.go.kr/data/15075057/openapi.do)
+   - 약국: [국립중앙의료원\_전국 약국 정보 조회 서비스](https://www.data.go.kr/data/15000576/openapi.do) 또는 [심평원\_전국 병의원 및 약국 현황](https://www.data.go.kr/data/15051059/fileData.do) (파일 데이터가 다루기 쉽다)
+   - 의약품: [식약처\_의약품개요정보(e약은요)](https://www.data.go.kr/data/15075057/openapi.do)
    - 행정구역 코드: 행정안전부 표준 코드
 
 2. `tools/seed-generator/build_master_seed.py` 를 작성한다. **일회성 수작업이 아니라 재실행 가능한 스크립트로 만든다.**
@@ -607,12 +641,14 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-06
 
 **관련 파일**
+
 - `tools/seed-generator/build_master_seed.py` — `CREATE` — 변환 스크립트
 - `tools/seed-generator/data/` — `CREATE` — 원본 데이터
 - `miniproject1-backend/src/main/resources/db/migration/V2__seed_master.sql` — `CREATE` — 마스터 시드
 - `DATABASE.md` — `REFERENCE` — §6 시드 전략
 
 **완료 판정**
+
 - `region` ≥ 20건, `pharmacy` ≥ 300건, `drug` ≥ 30종 적재
 - 모든 `pharmacy` 행에 `lat`, `lng`, `region_code` 가 NULL이 아니다
 - 마이그레이션을 두 번 돌려도 중복이 생기지 않는다
@@ -634,6 +670,7 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **구현 가이드**
 
 1. [DATABASE.md](./DATABASE.md) §6.2의 생성 규칙을 구현한다.
+
    ```python
    random.seed(20260915)                       # 반드시 고정
    factor = {p.id: uniform(0.85, 1.25) for p in pharmacies}
@@ -658,11 +695,13 @@ P0 27개의 예상 합계는 약 **13일**이다. 1인이 1~2주에 전부 끝�
 **선행 태스크** T-07
 
 **관련 파일**
+
 - `tools/seed-generator/build_price_seed.py` — `CREATE` — 제보 생성 스크립트
 - `miniproject1-backend/src/main/resources/db/migration/V3__seed_prices.sql` — `CREATE` — 가격 시드
 - `DATABASE.md` — `REFERENCE` — §6.2 생성 규칙, §5.2 통계 쿼리
 
 **완료 판정**
+
 - `price_report` ≥ 3,000건, 그중 약 2%가 이상치 범위
 - `pharmacy_drug_price_stat` 이 채워져 있고 `rep_price` 가 NULL인 행이 없다
 - 같은 스크립트를 두 번 돌리면 **동일한 데이터**가 나온다 (시드 고정 확인)
@@ -685,6 +724,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **구현 가이드**
 
 1. 인터페이스를 정의한다.
+
    ```java
    public interface DistanceCalculator {
        BoundingBox boundingBox(double lat, double lng, int radiusM);
@@ -695,13 +735,16 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
    ```
 
 2. `HaversineDistanceCalculator` 를 구현한다.
+
    ```
    latDelta = radiusM / 111_320.0
    lngDelta = radiusM / (111_320.0 * cos(toRadians(lat)))
    ```
+
    ⚠️ **경도 델타에 `cos(lat)` 보정을 빼먹으면** 위도가 높을수록 반경이 과도하게 넓어진다. 한국 위도(37도)에서 약 25% 오차다.
 
 3. Haversine 거리:
+
    ```java
    double R = 6_371_000;
    double dLat = toRadians(lat2 - lat1), dLng = toRadians(lng2 - lng1);
@@ -719,11 +762,13 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-08
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/distance/DistanceCalculator.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/distance/HaversineDistanceCalculator.java` — `CREATE`
 - `DATABASE.md` — `REFERENCE` — §4 거리 계산
 
 **완료 판정**
+
 - 강남역(37.4979, 127.0276) ↔ 역삼역(37.5006, 127.0366)의 거리가 실제값(약 850m) 대비 오차 1% 이내
 - 바운딩 박스가 반경 원을 완전히 포함한다 (북/남/동/서 경계 좌표 4방향 테스트)
 - 위도 33도와 38도에서 `lngDelta` 가 다르게 계산된다 (cos 보정 확인)
@@ -741,6 +786,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **구현 가이드**
 
 1. [PRD.md](./PRD.md) §F3.1 절차를 그대로 구현한다.
+
    ```
    1) 대상: status='ACTIVE' AND flagged=false AND purchased_at >= CURRENT_DATE - 90일
    2) 0건이면 창을 180일로 확대 재시도. 그래도 0건이면 stat 행 삭제
@@ -754,6 +800,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 3. **4건 미만이면 IQR 계산을 생략한다.** 표본이 적으면 사분위수 자체가 무의미하고, 3건 중 1건이 제거되는 일이 생긴다.
 
 4. 인터페이스:
+
    ```java
    public interface PriceStatService {
        /** 해당 조합의 통계를 재계산해 upsert하고, 유효 제보가 0이면 삭제한다. */
@@ -770,12 +817,14 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-08
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/service/PriceStatService.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/repository/PriceStatRepository.java` — `CREATE`
 - `PRD.md` — `REFERENCE` — §F3.1
 - `DATABASE.md` — `REFERENCE` — §5.2 재계산 쿼리
 
 **완료 판정**
+
 - 제보 5건 중 극단값 1건이 있을 때 `rep_price` 가 그 값에 흔들리지 않는다
 - 제보 3건일 때 IQR 제거 없이 중앙값이 나온다
 - 90일 내 제보가 없으면 180일 창으로 확대되고 `window_days = 180` 으로 기록된다
@@ -794,6 +843,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **구현 가이드**
 
 1. [API.md](./API.md) §5 "Score 계산 명세" 를 그대로 구현한다.
+
    ```
    priceScore_i     = (P_max == P_min) ? 1.0 : (P_max - rep_i) / (P_max - P_min)
    distanceScore_i  = clamp(1 - dist_i / R, 0, 1)
@@ -804,6 +854,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 2. **Score 계산과 정렬은 SQL이 아니라 Java 서비스 레이어에서 한다.** 후보가 수백 건 수준이라 성능 차이가 없고, 단위 테스트 작성이 비교할 수 없이 쉬워진다. SQL은 거리와 통계만 가져온다.
 
 3. 순수 함수로 분리해 DB 없이 테스트 가능하게 만든다.
+
    ```java
    public record Candidate(
        long pharmacyId, int repPrice, double distanceM,
@@ -833,11 +884,13 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-09, T-10
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/service/ScoreCalculator.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/dto/ScoreBreakdown.java` — `CREATE`
 - `API.md` — `REFERENCE` — §5 Score 계산 명세
 
 **완료 판정**
+
 - 수식이 [PRD.md](./PRD.md) §F3.2 및 [API.md](./API.md) §5와 완전히 일치
 - 후보 1개일 때 예외 없이 `priceScore = 1.0`
 - 가중치를 yml에서 바꾸면 순위가 실제로 바뀐다
@@ -859,36 +912,38 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 
 `ScoreCalculator` 테스트 (DB 불필요):
 
-| # | 테스트 | 기대 |
-|---|---|---|
-| 1 | 거리·신선도 동일, 가격만 다름 | 싼 쪽이 상위 |
-| 2 | 가격·신선도 동일, 거리만 다름 | 가까운 쪽이 상위 |
-| 3 | 가격·거리 동일, 신선도만 다름 | 최근 쪽이 상위 |
-| 4 | 후보 1개 | `priceScore = 1.0`, 예외 없음 |
-| 5 | 모든 후보 가격 동일 | 전원 `priceScore = 1.0` (0 나누기 없음) |
-| 6 | 동일 입력 2회 호출 | 순서 완전 일치 (결정성) |
-| 7 | 가장 싼 약국이 반경 경계, 2위가 코앞 | 거리 가중치로 순위 역전 — **의도된 동작으로 고정** |
-| 8 | reportCount 1, ageDays 40 | `LOW_CONFIDENCE` + `STALE_DATA` 뱃지 |
+| #   | 테스트                               | 기대                                               |
+| --- | ------------------------------------ | -------------------------------------------------- |
+| 1   | 거리·신선도 동일, 가격만 다름        | 싼 쪽이 상위                                       |
+| 2   | 가격·신선도 동일, 거리만 다름        | 가까운 쪽이 상위                                   |
+| 3   | 가격·거리 동일, 신선도만 다름        | 최근 쪽이 상위                                     |
+| 4   | 후보 1개                             | `priceScore = 1.0`, 예외 없음                      |
+| 5   | 모든 후보 가격 동일                  | 전원 `priceScore = 1.0` (0 나누기 없음)            |
+| 6   | 동일 입력 2회 호출                   | 순서 완전 일치 (결정성)                            |
+| 7   | 가장 싼 약국이 반경 경계, 2위가 코앞 | 거리 가중치로 순위 역전 — **의도된 동작으로 고정** |
+| 8   | reportCount 1, ageDays 40            | `LOW_CONFIDENCE` + `STALE_DATA` 뱃지               |
 
 `PriceStatService` 테스트 (DB 필요):
 
-| # | 테스트 | 기대 |
-|---|---|---|
-| 9 | 5건 중 극단값 1건 | `rep_price` 가 흔들리지 않음 |
-| 10 | 3건 (4건 미만) | IQR 제거 생략, 중앙값 반환 |
-| 11 | 90일 내 0건, 180일 내 존재 | 확대 창으로 계산, `window_days = 180` |
-| 12 | 유효 제보 0건 | stat 행 삭제 |
+| #   | 테스트                     | 기대                                  |
+| --- | -------------------------- | ------------------------------------- |
+| 9   | 5건 중 극단값 1건          | `rep_price` 가 흔들리지 않음          |
+| 10  | 3건 (4건 미만)             | IQR 제거 생략, 중앙값 반환            |
+| 11  | 90일 내 0건, 180일 내 존재 | 확대 창으로 계산, `window_days = 180` |
+| 12  | 유효 제보 0건              | stat 행 삭제                          |
 
 **절대 점수값이 아니라 상대 순위를 검증한다.** 가중치를 바꿔도 테스트가 의미를 유지해야 한다.
 
 **선행 태스크** T-11
 
 **관련 파일**
+
 - `miniproject1-backend/src/test/java/com/pharmaprice/recommendation/ScoreCalculatorTest.java` — `CREATE`
 - `miniproject1-backend/src/test/java/com/pharmaprice/recommendation/PriceStatServiceTest.java` — `CREATE`
 - `PRD.md` — `REFERENCE` — §10 성공 지표
 
 **완료 판정**
+
 - 12개 테스트 전부 통과
 - `miniproject1-backend/` 에서 `./mvnw test` 로 재현 가능
 
@@ -915,11 +970,13 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-08
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/drug/controller/DrugController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/drug/repository/DrugQueryRepository.java` — `CREATE` — native query
 - `API.md` — `REFERENCE` — §3
 
 **완료 판정**
+
 - `GET /api/v1/drugs?q=타이레놀` 이 200과 함께 1건 이상 반환
 - 응답 필드가 [API.md](./API.md) §3 과 정확히 일치
 - 전문의약품 `item_seq` 로 조회해도 결과에 없다
@@ -943,10 +1000,12 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-08
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/pharmacy/controller/RegionController.java` — `CREATE`
 - `API.md` — `REFERENCE` — §7
 
 **완료 판정**
+
 - 시도별 그룹 구조로 반환되고 `centerLat`/`centerLng` 가 모두 채워져 있다
 - `pharmacyCount` 가 실제 약국 수와 일치한다
 
@@ -973,12 +1032,14 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-11, T-14
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/controller/SearchController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/service/SearchService.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/recommendation/repository/SearchQueryRepository.java` — `CREATE`
 - `API.md` — `REFERENCE` — §5 전체
 
 **완료 판정**
+
 - 응답 구조가 [API.md](./API.md) §5 예시와 필드 단위로 일치 (`scoreBreakdown`, `badges`, `summary`, `dataSource` 포함)
 - 반경 2km 검색 p95 < 500ms
 - 결과 0건일 때 `suggestion.estimatedCount` 가 실제 확대 반경의 건수와 일치
@@ -998,12 +1059,19 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **구현 가이드**
 
 1. `useUserLocation()` 훅을 만든다.
+
    ```typescript
    type LocationState =
-     | { status: 'idle' | 'requesting' }
-     | { status: 'granted'; lat: number; lng: number; source: 'GPS' }
-     | { status: 'fallback'; lat: number; lng: number; source: 'REGION'; regionCode: string }
-     | { status: 'denied' | 'unavailable' }
+     | { status: "idle" | "requesting" }
+     | { status: "granted"; lat: number; lng: number; source: "GPS" }
+     | {
+         status: "fallback";
+         lat: number;
+         lng: number;
+         source: "REGION";
+         regionCode: string;
+       }
+     | { status: "denied" | "unavailable" };
    ```
 
 2. `navigator.geolocation.getCurrentPosition` 을 `{ enableHighAccuracy: false, timeout: 8000 }` 으로 호출한다.
@@ -1023,12 +1091,14 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-04, T-14
 
 **관련 파일**
+
 - `miniproject1-frontend/lib/slices/location-slice.ts` — `CREATE` — 위치 상태
 - `miniproject1-frontend/hooks/use-user-location.ts` — `CREATE` — 슬라이스 래퍼 훅
 - `miniproject1-frontend/components/region-picker.tsx` — `CREATE`
 - `miniproject1-frontend/components/location-indicator.tsx` — `CREATE`
 
 **완료 판정**
+
 - 권한 허용 시 좌표 획득 후 헤더에 표시
 - 권한 **거부** 시 지역 선택 모달이 뜨고, 선택 후 검색이 정상 동작
 - 8초 타임아웃 시에도 폴백이 뜬다
@@ -1060,10 +1130,12 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-16
 
 **관련 파일**
+
 - `miniproject1-frontend/app/page.tsx` — `TO_MODIFY` — 홈 화면
 - `miniproject1-frontend/components/drug-autocomplete.tsx` — `CREATE`
 
 **완료 판정**
+
 - 한글 2글자 입력 시 8건 이내 후보가 300ms 내 표시
 - 각 후보에 포장 단위가 보인다
 - 키보드만으로 검색 완료 가능
@@ -1098,12 +1170,14 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-15, T-17
 
 **관련 파일**
+
 - `miniproject1-frontend/app/search/page.tsx` — `CREATE`
 - `miniproject1-frontend/components/pharmacy-result-card.tsx` — `CREATE`
 - `miniproject1-frontend/components/sort-toggle.tsx` — `CREATE`
 - `API.md` — `REFERENCE` — §5 응답 구조
 
 **완료 판정**
+
 - 실제 좌표로 검색 시 Score 순 결과가 렌더링됨
 - 정렬을 "가격순"으로 바꾸면 1위가 바뀐다 (URL도 함께 변함)
 - 0건일 때 반경 확대 제안이 뜨고 클릭하면 실제로 결과가 나온다
@@ -1136,11 +1210,13 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-09
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/pharmacy/controller/PharmacyController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/pharmacy/repository/PharmacyQueryRepository.java` — `CREATE`
 - `API.md` — `REFERENCE` — §4
 
 **완료 판정**
+
 - 이름 검색과 좌표 검색이 각각 동작하고, 둘 다 없으면 400
 - 약국 상세의 `drugPrices` 가 가격 오름차순으로 정렬됨
 - 대한민국 범위 밖 좌표로 호출 시 `400 INVALID_COORDINATE`
@@ -1163,10 +1239,12 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-19
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/pharmacy/controller/PharmacyController.java` — `TO_MODIFY`
 - `API.md` — `REFERENCE` — §4 history
 
 **완료 판정**
+
 - 응답에 `flagged` 항목이 포함된다
 - `days=30` 으로 좁히면 결과가 줄어든다
 - 이력이 0건이어도 빈 배열과 200을 반환한다 (404 아님)
@@ -1193,10 +1271,12 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-20, T-18
 
 **관련 파일**
+
 - `miniproject1-frontend/app/pharmacies/[id]/page.tsx` — `CREATE`
 - `miniproject1-frontend/components/price-history-chart.tsx` — `CREATE`
 
 **완료 판정**
+
 - 약품별 가격표가 가격 오름차순으로 표시됨
 - 이력 차트에서 flagged 점이 시각적으로 구분되고 툴팁이 뜬다
 - 검색 결과 카드에서 약국 상세로 이동된다
@@ -1224,11 +1304,13 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 **선행 태스크** T-18
 
 **관련 파일**
+
 - `miniproject1-frontend/components/pharmacy-map.tsx` — `CREATE`
 - `miniproject1-frontend/app/search/page.tsx` — `TO_MODIFY` — 지도 영역 채우기
 - `.env.example` — `REFERENCE` — 카카오 키
 
 **완료 판정**
+
 - 후보 약국이 전부 보이도록 지도 범위가 자동 조정됨
 - 마커에 가격이 표시되고 1위가 구분된다
 - 카드↔마커 양방향 연동 동작
@@ -1274,11 +1356,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-06
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/auth/security/` — `CREATE` — JWT 프로바이더·필터
 - `miniproject1-backend/src/main/java/com/pharmaprice/common/config/SecurityConfig.java` — `CREATE` — 필터 체인
 - `API.md` — `REFERENCE` — §1.3 인증 방식, §1.2 에러 포맷
 
 **완료 판정**
+
 - 토큰 없이 `POST /api/v1/price-reports` 호출 시 `401` + `{"code":"UNAUTHENTICATED"}` (JSON)
 - USER 토큰으로 `/api/v1/admin/**` 호출 시 `403` + `{"code":"FORBIDDEN"}`
 - 만료된 토큰으로 호출 시 `401`
@@ -1308,11 +1392,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-23
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/auth/controller/AuthController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/auth/dto/` — `CREATE` — 요청·응답 DTO
 - `API.md` — `REFERENCE` — §2 전체
 
 **완료 판정**
+
 - 5개 엔드포인트가 [API.md](./API.md) §2 명세와 요청·응답이 정확히 일치
 - 중복 이메일 가입 시 `409`
 - 응답 JSON 어디에도 비밀번호 해시가 없다
@@ -1345,6 +1431,7 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-24
 
 **관련 파일**
+
 - `miniproject1-frontend/app/(auth)/login/page.tsx` — `CREATE`
 - `miniproject1-frontend/app/(auth)/signup/page.tsx` — `CREATE`
 - `miniproject1-frontend/lib/slices/auth-slice.ts` — `CREATE` — 인증 세션 상태
@@ -1352,6 +1439,7 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 - `miniproject1-frontend/middleware.ts` — `CREATE` — 보호 라우트
 
 **완료 판정**
+
 - 가입 → 로그인 → 헤더에 닉네임 표시 → 로그아웃 흐름 동작
 - 미로그인으로 `/reports/new` 접근 시 로그인으로 가고, 로그인 후 원래 경로로 복귀
 - access 토큰 만료 후 API 호출 시 자동 갱신되어 흐름이 끊기지 않는다
@@ -1388,11 +1476,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-24, T-10
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/report/controller/PriceReportController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/report/service/PriceReportService.java` — `CREATE`
 - `API.md` — `REFERENCE` — §6
 
 **완료 판정**
+
 - 정상 제보 → `201` + `updatedStat` 반영
 - 같은 날 같은 (약국, 약품) 재제보 → `409 DUPLICATE_REPORT`
 - 이상치 제보 → `201` + `flagged: true` + `warning`, 그리고 **`rep_price` 는 변하지 않음**
@@ -1424,11 +1514,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-26
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/report/controller/UploadController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/report/service/FileStorageService.java` — `CREATE`
 - `API.md` — `REFERENCE` — §6 업로드
 
 **완료 판정**
+
 - 5MB 초과 → `413 FILE_TOO_LARGE`
 - 확장자를 `.jpg` 로 위장한 PDF → `415 UNSUPPORTED_FILE_TYPE`
 - 타인의 파일 조회 시 `403`
@@ -1452,10 +1544,12 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-26
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/report/controller/PriceReportController.java` — `TO_MODIFY`
 - `API.md` — `REFERENCE` — §6 목록
 
 **완료 판정**
+
 - 응답에 제보자 이메일·id가 없다
 - `mine=true` 를 비로그인으로 호출 시 `401`
 
@@ -1488,12 +1582,14 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-26, T-25, T-21
 
 **관련 파일**
+
 - `miniproject1-frontend/app/reports/new/page.tsx` — `CREATE`
 - `miniproject1-frontend/components/pharmacy-picker.tsx` — `CREATE`
 - `miniproject1-frontend/lib/slices/report-draft-slice.ts` — `CREATE` — 제보 폼 임시 입력
 - `API.md` — `REFERENCE` — §6 요청 스키마
 
 **완료 판정**
+
 - 약국 상세에서 진입 시 약국이 미리 채워져 있다
 - `0`, `-100`, `abc` 입력 시 제출이 막히고 필드 에러가 뜬다
 - 이상치 가격 제출 시 경고 모달이 뜨지만 제보는 성공 처리된다
@@ -1521,9 +1617,11 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-29
 
 **관련 파일**
+
 - `miniproject1-frontend/app/me/page.tsx` — `CREATE`
 
 **완료 판정**
+
 - 본인 제보만 보인다
 - 상태 뱃지가 실제 `status`/`flagged` 와 일치
 - 빈 상태 화면이 정상 표시
@@ -1554,12 +1652,14 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-24, T-10
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/admin/controller/AdminStatsController.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/admin/repository/AdminStatsRepository.java` — `CREATE`
 - `DATABASE.md` — `REFERENCE` — §5.3, §5.4
 - `API.md` — `REFERENCE` — §8
 
 **완료 판정**
+
 - 4개 엔드포인트가 [API.md](./API.md) §8 명세와 일치
 - USER 토큰으로 호출 시 전부 `403`
 - `price-gaps` 의 `gapPct` 가 수기 검산과 일치
@@ -1583,10 +1683,12 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-31
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/admin/controller/AdminReportController.java` — `CREATE`
 - `API.md` — `REFERENCE` — §8 제보 관리
 
 **완료 판정**
+
 - 제보를 `HIDDEN` 으로 바꾸면 `rep_price` 가 즉시 재계산된다
 - `flagged` 를 false로 풀면 해당 제보가 통계에 다시 포함된다
 - `recalculatedStat` 이 실제 DB 값과 일치
@@ -1611,10 +1713,12 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-32, T-25
 
 **관련 파일**
+
 - `miniproject1-frontend/app/admin/page.tsx` — `CREATE`
 - `miniproject1-frontend/app/admin/reports/page.tsx` — `CREATE`
 
 **완료 판정**
+
 - KPI 수치가 API 응답과 일치
 - 제보 숨김 처리 후 목록과 KPI가 갱신된다
 - USER 계정으로 `/admin` 접근 시 차단됨
@@ -1640,10 +1744,12 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-33
 
 **관련 파일**
+
 - `miniproject1-frontend/app/admin/stats/page.tsx` — `CREATE`
 - `miniproject1-frontend/components/charts/` — `CREATE`
 
 **완료 판정**
+
 - 3개 탭이 모두 데이터를 렌더링
 - 필터 변경 시 테이블·차트가 갱신됨
 - 375px 폭에서 테이블만 가로 스크롤되고 페이지는 그대로다
@@ -1677,12 +1783,14 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-15, T-26
 
 **관련 파일**
+
 - `miniproject1-backend/src/main/java/com/pharmaprice/common/exception/GlobalExceptionHandler.java` — `CREATE`
 - `miniproject1-backend/src/main/java/com/pharmaprice/common/exception/ErrorCode.java` — `CREATE`
 - `miniproject1-backend/src/main/resources/messages.properties` — `CREATE`
 - `API.md` — `REFERENCE` — §1.2, §1.3
 
 **완료 판정**
+
 - 문서의 모든 에러 코드가 `ErrorCode` enum에 존재
 - 검증 실패 시 `fieldErrors` 가 채워진다
 - 의도적으로 500을 발생시켜도 스택트레이스가 응답에 없다
@@ -1709,11 +1817,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-21, T-30
 
 **관련 파일**
+
 - `miniproject1-frontend/components/ui/empty-state.tsx` — `TO_MODIFY`
 - `miniproject1-frontend/components/ui/error-state.tsx` — `TO_MODIFY`
 - `miniproject1-frontend/lib/error-message.ts` — `CREATE` — 에러 코드 → 한글 메시지
 
 **완료 판정**
+
 - 전 화면에서 3상태가 모두 확인됨
 - 375px에서 가로 스크롤이 발생하는 페이지 0개
 - 영문 에러 원문이 노출되는 지점 0개
@@ -1732,6 +1842,7 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 
 1. **새 디렉터리에 클론**해서 `README.md` 절차만 따라 기동되는지 확인한다.
    기존 작업 디렉터리에서 테스트하면 이미 설치된 것들 때문에 항상 성공한다.
+
    ```bash
    git clone <repo> && cd miniProject1
    cp .env.example .env              # 값 채우기
@@ -1770,11 +1881,13 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 **선행 태스크** T-35, T-36, T-02
 
 **관련 파일**
+
 - `README.md` — `TO_MODIFY` — 실행 가이드 완성
 - `DEMO.md` — `CREATE` — 데모 시나리오
 - `.env.example` — `REFERENCE`
 
 **완료 판정**
+
 - 클린 클론 + README 절차만으로 전체 기동
 - DB를 비우고 재기동해도 마이그레이션·시드가 정상 적용
 - 핵심 흐름 8단계 무중단 완주
@@ -1784,11 +1897,11 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 
 ## 2. 우선순위 요약
 
-| 우선순위 | 태스크 | 예상 합계 |
-|---|---|---|
-| **P0 (27)** | T-01 ~ T-19, T-21, T-23 ~ T-26, T-29, T-35, T-37 | 약 13d |
-| **P1 (6)** | T-20, T-22, T-27, T-28, T-30, T-36 | 약 2.75d |
-| **P2 (4)** | T-31 ~ T-34 | 약 2.5d |
+| 우선순위    | 태스크                                           | 예상 합계 |
+| ----------- | ------------------------------------------------ | --------- |
+| **P0 (27)** | T-01 ~ T-19, T-21, T-23 ~ T-26, T-29, T-35, T-37 | 약 13d    |
+| **P1 (6)**  | T-20, T-22, T-27, T-28, T-30, T-36               | 약 2.75d  |
+| **P2 (4)**  | T-31 ~ T-34                                      | 약 2.5d   |
 
 **잘라내는 순서** (§1 "일정 현실성" 참고): FS-5 전체 → T-22 지도 → T-27 업로드 → T-30 내 제보 → T-20/T-21 이력 차트.
 
@@ -1809,10 +1922,22 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
       "implementationGuide": "1) miniProject1/ 루트에 md 문서 4종을 평평하게 두고 miniproject1-frontend/, miniproject1-backend/, tools/seed-generator/ 생성 2) 백엔드 패키지는 도메인 기준(common, auth, pharmacy, drug, report, recommendation, admin), 각 안에 controller/service/repository/domain/dto 3) 프론트는 app/, components/, hooks/, lib/, types/ 4) 커밋 컨벤션 feat(T-09): ... 5) .editorconfig (Java 4칸, TS 2칸, LF) 6) .gitignore에 .env*, miniproject1-backend/target/, .next/, node_modules/, uploads/ — Maven Wrapper(mvnw, .mvn/)는 반드시 커밋 7) .env.example에 POSTGRES_*, JWT_SECRET, TZ=Asia/Seoul, NEXT_PUBLIC_API_BASE_URL, NEXT_PUBLIC_KAKAO_MAP_KEY 나열",
       "dependencies": [],
       "relatedFiles": [
-        { "path": "README.md", "type": "CREATE", "description": "프로젝트 개요" },
+        {
+          "path": "README.md",
+          "type": "CREATE",
+          "description": "프로젝트 개요"
+        },
         { "path": ".gitignore", "type": "CREATE", "description": "무시 목록" },
-        { "path": ".env.example", "type": "CREATE", "description": "환경변수 목록" },
-        { "path": "PRD.md", "type": "REFERENCE", "description": "요구사항 원본" }
+        {
+          "path": ".env.example",
+          "type": "CREATE",
+          "description": "환경변수 목록"
+        },
+        {
+          "path": "PRD.md",
+          "type": "REFERENCE",
+          "description": "요구사항 원본"
+        }
       ],
       "verificationCriteria": "위 디렉터리가 모두 존재한다. .env가 git에 추적되지 않고 .mvn/은 추적된다. .env.example만 보고 필요한 키를 전부 파악할 수 있다.",
       "notes": "실제 API 키 값은 절대 커밋하지 않는다."
@@ -1823,8 +1948,16 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
       "implementationGuide": "1) PostgreSQL 17 설치 (macOS: brew install postgresql@17 + brew services start / Windows: 공식 설치 프로그램, Locale은 C 또는 en_US.UTF-8) 2) CREATE USER pharmaprice WITH PASSWORD 'changeme'; CREATE DATABASE pharmaprice OWNER pharmaprice ENCODING 'UTF8'; GRANT ALL ON SCHEMA public TO pharmaprice; 3) ALTER DATABASE pharmaprice SET timezone TO 'Asia/Seoul' — UTC로 두면 오전 9시 이전에 CURRENT_DATE가 전날로 잡혀 중복 제보 방지와 180일 검증이 어긋남 4) 슈퍼유저로 CREATE EXTENSION IF NOT EXISTS pg_trgm (일반 유저는 권한이 없어 V1 마이그레이션이 실패할 수 있음) 5) psql로 접속 확인 6) 절차를 README.md의 '로컬 환경 준비' 절에 그대로 기록",
       "dependencies": ["T-01. 프로젝트 구조 및 개발 컨벤션 셋업"],
       "relatedFiles": [
-        { "path": "README.md", "type": "TO_MODIFY", "description": "로컬 환경 준비 절 추가" },
-        { "path": ".env.example", "type": "REFERENCE", "description": "DB 접속 정보" }
+        {
+          "path": "README.md",
+          "type": "TO_MODIFY",
+          "description": "로컬 환경 준비 절 추가"
+        },
+        {
+          "path": ".env.example",
+          "type": "REFERENCE",
+          "description": "DB 접속 정보"
+        }
       ],
       "verificationCriteria": "psql로 pharmaprice DB에 pharmaprice 계정 접속 성공. SHOW timezone이 Asia/Seoul 반환. pg_extension에 pg_trgm 존재. README 절차만 따라 해도 같은 상태가 재현된다.",
       "notes": "포트 5432가 이미 쓰이면 lsof -i :5432로 확인하고 5433 사용 시 .env에도 반영한다."
@@ -1835,4 +1968,4 @@ JWT 발급·검증 인프라와 URL별 접근 제어를 세운다.
 
 ---
 
-*태스크를 추가·분할했다면 이 문서를 먼저 고치고 `split_tasks` 를 `selective` 모드로 재투입한다. Score 수식이나 스키마가 바뀌면 [PRD.md](./PRD.md)·[DATABASE.md](./DATABASE.md)·[API.md](./API.md)를 함께 갱신할 것.*
+_태스크를 추가·분할했다면 이 문서를 먼저 고치고 `split_tasks` 를 `selective` 모드로 재투입한다. Score 수식이나 스키마가 바뀌면 [PRD.md](./PRD.md)·[DATABASE.md](./DATABASE.md)·[API.md](./API.md)를 함께 갱신할 것._
