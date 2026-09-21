@@ -508,7 +508,16 @@ def render_sql(reports: list[ReportRow]) -> str:
         "-- =============================================================================",
         "",
     ]
-    return "\n".join(header) + render_price_report_sql(reports) + "\n" + STAT_RECALC_SQL
+    analyze_note = (
+        "\n-- price_report를 방금 대량 INSERT한 직후라 플래너 통계가 비어 있다. ANALYZE 없이\n"
+        "-- 바로 STAT_RECALC_SQL(그룹별 percentile_cont 집계)을 돌리면 카디널리티 추정이\n"
+        "-- 완전히 틀어져 최악의 실행계획(예: nested loop)을 골라 표본이 클 때 극단적으로\n"
+        "-- 느려진다(실측: 약국 2,485건·제보 18.8만 건 규모에서 ANALYZE 없이 13분 넘게\n"
+        "-- 끝나지 않아 취소함). Flyway 트랜잭션 안에서도 ANALYZE는 그 시점까지의 변경\n"
+        "-- 내용을 볼 수 있다.\n"
+        "ANALYZE price_report;\n"
+    )
+    return "\n".join(header) + render_price_report_sql(reports) + analyze_note + "\n" + STAT_RECALC_SQL
 
 
 # -----------------------------------------------------------------------------
