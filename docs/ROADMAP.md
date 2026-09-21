@@ -1074,8 +1074,8 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
      | { status: "denied" | "unavailable" };
    ```
 
-2. `navigator.geolocation.getCurrentPosition` 을 `{ enableHighAccuracy: false, timeout: 8000 }` 으로 호출한다.
-   **고정밀을 켜면 실내에서 8초를 넘겨 사용자가 이탈한다.**
+2. `navigator.geolocation.getCurrentPosition` 을 `{ enableHighAccuracy: true, timeout: 15000 }` 으로 호출한다.
+   **[갱신] 저정밀(enableHighAccuracy: false)은 Wi-Fi/IP 기반 추정치라 국내에서 실제 위치와 크게 어긋나는 사례가 있어 고정밀로 전환했다. "현재 위치" 요청은 항상 버튼 클릭 등 사용자 명시 동작으로만 트리거되므로(자동/조용한 요청 없음) 정확도를 위해 대기 시간을 늘리는 쪽을 택한다.**
 
 3. 거부/타임아웃/미지원 시 즉시 `RegionPicker` 모달을 띄운다 — `GET /api/v1/regions` 로 시도 → 시군구 2단 선택, 선택하면 `centerLat/centerLng` 를 좌표로 쓴다.
 
@@ -1101,7 +1101,7 @@ PostGIS 없이 반경 검색을 수행하는 거리 계산기를 만든다. 나�
 
 - 권한 허용 시 좌표 획득 후 헤더에 표시
 - 권한 **거부** 시 지역 선택 모달이 뜨고, 선택 후 검색이 정상 동작
-- 8초 타임아웃 시에도 폴백이 뜬다
+- 15초 타임아웃 시에도 폴백이 뜬다
 - 페이지를 이동해도 위치가 유지된다
 - 시크릿 모드(스토리지 차단)에서도 크래시 없이 동작
 

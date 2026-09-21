@@ -36,10 +36,17 @@ export type UseUserLocationState =
     }
   | { status: "denied" | "unavailable" };
 
-/** ROADMAP T-16 메모: 고정밀(enableHighAccuracy)을 켜면 실내에서 8초를 넘겨 사용자가 이탈한다. */
+/**
+ * ROADMAP T-16 메모(저정밀 기본값)는 폐기한다 — enableHighAccuracy: false는
+ * GPS 칩 대신 Wi-Fi/기지국(또는 그마저 없으면 IP) 기반 추정치를 쓰게 되는데,
+ * 국내에서는 이 추정치가 실제 위치와 수백m~수km씩 어긋나는 경우가 많아
+ * "현재 위치" 버튼의 이름과 어긋난다. 이 옵션은 항상 사용자가 버튼을 눌러야만
+ * 쓰이므로(자동/조용한 요청 없음, NearbyPharmacies/SearchLocationBar/
+ * DrugAutocomplete 참고) 정확도를 위해 몇 초 더 기다리는 편이 낫다.
+ */
 const GEOLOCATION_OPTIONS: PositionOptions = {
-  enableHighAccuracy: false,
-  timeout: 8000,
+  enableHighAccuracy: true,
+  timeout: 15000,
 };
 
 function readStoredLocation(): StoredLocation | null {
@@ -112,6 +119,12 @@ export function useUserLocation() {
   const [transientStatus, setTransientStatus] = useState<
     "idle" | "requesting" | "denied" | "unavailable"
   >("idle");
+  // 방금 받은 GPS 응답의 오차 반경(미터). 데스크톱/노트북처럼 GPS 칩이 없는
+  // 기기는 Wi-Fi/IP 기반 추정만 가능해 국내에서는 이 값이 수 km까지도 커질
+  // 수 있다 — "다른 지역이 나온다" 신고의 실제 원인이 이 오차인 경우가
+  // 많아, 호출부가 판단해 경고를 보여줄 수 있도록 그대로 노출한다. 지역
+  // 수동 선택/리셋에는 의미가 없으므로 그때는 null로 되돌린다.
+  const [lastGpsAccuracyM, setLastGpsAccuracyM] = useState<number | null>(null);
 
   // 마운트 시 sessionStorage에 남은 확정 위치를 Redux로 복원한다
   // ("페이지를 이동해도 위치가 유지된다" 완료 판정). Redux가 이미 값을
@@ -176,6 +189,7 @@ export function useUserLocation() {
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+          setLastGpsAccuracyM(position.coords.accuracy);
           dispatch(setCoordinates({ lat, lng }));
           writeStoredLocation({
             lat,
@@ -186,6 +200,7 @@ export function useUserLocation() {
           });
         },
         (error) => {
+          setLastGpsAccuracyM(null);
           const status = mapGeolocationErrorToStatus(error);
           setTransientStatus(status);
           onFailure?.(status);
@@ -203,6 +218,7 @@ export function useUserLocation() {
       lng: number;
       label: string;
     }) => {
+      setLastGpsAccuracyM(null);
       dispatch(setRegionFallback(region));
       writeStoredLocation({ ...region, source: "REGION" });
     },
@@ -213,7 +229,14 @@ export function useUserLocation() {
     dispatch(clearLocation());
     clearStoredLocation();
     setTransientStatus("idle");
+    setLastGpsAccuracyM(null);
   }, [dispatch]);
 
-  return { state, requestGpsLocation, selectRegionFallback, reset };
+  return {
+    state,
+    requestGpsLocation,
+    selectRegionFallback,
+    reset,
+    lastGpsAccuracyM,
+  };
 }
