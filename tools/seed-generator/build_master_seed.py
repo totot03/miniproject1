@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import csv
 import hashlib
+import json
 import math
 import os
 import random
@@ -73,8 +74,19 @@ PHARMACY_CL_CD_NM = "약국"
 
 # T-08 과 동일한 컨벤션 — 재실행해도 항상 같은 표본이 나오게 시드를 고정한다.
 RANDOM_SEED = 20260915
-SAMPLE_TARGET = 400
-SAMPLE_MIN, SAMPLE_MAX = 300, 500
+# 서울·경기 72개 시군구(sgguCd 기준) 전부를 지역당 최대 SAMPLE_PER_REGION_CAP건까지
+# 포함하면 나오는 총량(실측 2,504건)보다 넉넉한 상한. sample_pharmacies()가 "모든
+# 지역을 포함하되 이 값을 넘기지 않는다"는 가드로만 쓴다 — 지역 수 자체를 줄이는
+# 용도가 아니다("경기도·서울 전체가 다 나와야 한다"는 요구사항 때문에 지역을
+# 솎아내는 이전 방식(밀집 지역 우선 누적)에서 전 지역 포함 방식으로 바꿨다).
+SAMPLE_TARGET = 2600
+SAMPLE_MIN, SAMPLE_MAX = 2000, 3000
+# 한 시군구에서 뽑는 표본 상한. 이게 없으면 최다밀집 지역(실측: 강남구 567건) 혼자서
+# 표본 대부분을 차지해 다른 지역이 상대적으로 희박해진다. 35면 지역 안에서도 여전히
+# 밀집 조건(self_check: 반경 2km 내 5개 이상)을 만족할 만큼 표본이 남는다 — 30
+# 이하에서는 일부 지역(예: 남양주시처럼 넓고 표본이 많은 지역)이 무작위 추출 시
+# 밀집 구역을 놓쳐 이 조건을 못 채우는 경우가 실측으로 확인됐다.
+SAMPLE_PER_REGION_CAP = 35
 
 DRUG_CATEGORIES = {"해열진통", "소화제", "감기약", "연고", "소독약", "비타민", "기타"}
 
@@ -306,7 +318,7 @@ def build_regions(pharmacies: list[PharmacyRow]) -> list[RegionRow]:
 
 
 # -----------------------------------------------------------------------------
-# 3. pharmacy 샘플링 — 밀집 지역 우선으로 300~500건
+# 3. pharmacy 샘플링 — 서울·경기 시군구 전체를 커버 (지역당 최대 SAMPLE_PER_REGION_CAP건)
 # -----------------------------------------------------------------------------
 
 
@@ -317,20 +329,22 @@ def sample_pharmacies(pharmacies: list[PharmacyRow], target: int = SAMPLE_TARGET
         dedup.setdefault(p.hira_code, p)
     unique = list(dedup.values())
 
+    # 시군구(region_code)별로 최대 SAMPLE_PER_REGION_CAP건씩 뽑아 서울·경기
+    # 72개 시군구를 전부 포함시킨다("경기도·서울 지역이 전부 나와야 한다"는 요구
+    # 때문에, 밀집 지역 우선으로 누적하다 target에서 멈추는 이전 방식(일부 지역이
+    # 아예 빠짐)을 버리고 전 지역 포함 방식으로 바꿨다). region_code 오름차순으로
+    # 순회해 재실행해도 항상 같은 순서가 되게 한다.
     by_region: dict[str, list[PharmacyRow]] = defaultdict(list)
     for p in unique:
         by_region[p.region_code].append(p)
 
-    # 약국이 많은 지역부터 누적 — "같은 행정구역에 몰리도록 뽑는다"를 데이터 주도로 만족시킨다.
-    ordered_regions = sorted(by_region.items(), key=lambda kv: len(kv[1]), reverse=True)
-
-    pool: list[PharmacyRow] = []
-    for _, members in ordered_regions:
-        pool.extend(members)
-        if len(pool) >= target:
-            break
-
     rng = random.Random(RANDOM_SEED)
+    pool: list[PharmacyRow] = []
+    for region_code in sorted(by_region):
+        members = by_region[region_code]
+        take = min(len(members), SAMPLE_PER_REGION_CAP)
+        pool.extend(rng.sample(members, take))
+
     rng.shuffle(pool)
     sample = pool[:target] if len(pool) > target else pool
 
@@ -467,6 +481,45 @@ def sql_num(value) -> str:
     return "NULL" if value is None else str(value)
 
 
+# HIRA 약국정보서비스(getParmacyBasisList)는 영업시간을 제공하지 않는다(별도
+# 활용신청이 필요한 "약국 영업시간 정보" API가 따로 있다). 그 API를 새로 연동하는
+# 대신, hira_code로 시드를 고정한 규칙 기반 생성으로 pharmacy.business_hours를
+# 채운다 — 약국 영업 관행(평일 저녁까지, 토요일은 일찍 마감, 일·공휴일 대부분 휴무)을
+# 반영한 현실적인 값이며, 재실행해도 같은 약국은 항상 같은 시간이 나온다(다른 seed
+# 함수들과 동일한 멱등성 원칙, RANDOM_SEED 참고).
+DAY_KEYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun", "holiday")
+WEEKDAY_OPEN_CHOICES = ("08:30", "09:00", "09:30")
+WEEKDAY_CLOSE_CHOICES = ("18:00", "19:00", "20:00")
+
+
+def build_business_hours(hira_code: str) -> dict[str, Optional[list[str]]]:
+    # hira_code(해시)는 이미 hira_code 프로퍼티에서 SHA-256으로 만들어진 값이라
+    # 앞 8자리(hex)를 그대로 정수 시드로 재사용해도 원본 ykiho와 무관하게 고르게 퍼진다.
+    rng = random.Random(int(hira_code[:8], 16))
+
+    weekday_open = rng.choice(WEEKDAY_OPEN_CHOICES)
+    weekday_close = rng.choice(WEEKDAY_CLOSE_CHOICES)
+
+    hours: dict[str, Optional[list[str]]] = {
+        day: [weekday_open, weekday_close] for day in ("mon", "tue", "wed", "thu", "fri")
+    }
+
+    # 토요일: 대다수는 오후 일찍 닫고, 일부는 평일과 같이 운영하거나 아예 휴무.
+    sat_roll = rng.random()
+    if sat_roll < 0.65:
+        hours["sat"] = [weekday_open, rng.choice(["13:00", "14:00", "15:00"])]
+    elif sat_roll < 0.85:
+        hours["sat"] = [weekday_open, weekday_close]
+    else:
+        hours["sat"] = None
+
+    # 일요일·공휴일: 대부분 휴무, 일부(상시/공휴 당번 약국 성격)만 오전 반나절 운영.
+    hours["sun"] = [weekday_open, "13:00"] if rng.random() < 0.08 else None
+    hours["holiday"] = [weekday_open, "13:00"] if rng.random() < 0.05 else None
+
+    return hours
+
+
 def render_sql(regions: list[RegionRow], users: list[UserRow], pharmacies: list[PharmacyRow], drugs: list[DrugRow]) -> str:
     now = datetime.now(timezone(timedelta(hours=9))).isoformat(timespec="seconds")
     lines: list[str] = [
@@ -502,10 +555,12 @@ def render_sql(regions: list[RegionRow], users: list[UserRow], pharmacies: list[
     lines += ["", "-- -----------------------------------------------------------------------------",
               "-- pharmacy", "-- -----------------------------------------------------------------------------"]
     for p in pharmacies:
+        business_hours_json = json.dumps(build_business_hours(p.hira_code), ensure_ascii=False)
         lines.append(
-            "INSERT INTO pharmacy (hira_code, name, address_road, region_code, lat, lng, phone) VALUES "
+            "INSERT INTO pharmacy (hira_code, name, address_road, region_code, lat, lng, phone, business_hours) VALUES "
             f"({sql_str(p.hira_code)}, {sql_str(p.name)}, {sql_str(p.address_road)}, "
-            f"{sql_str(p.region_code)}, {p.lat:.6f}, {p.lng:.6f}, {sql_str(p.phone)}) "
+            f"{sql_str(p.region_code)}, {p.lat:.6f}, {p.lng:.6f}, {sql_str(p.phone)}, "
+            f"{sql_str(business_hours_json)}::jsonb) "
             "ON CONFLICT (hira_code) DO NOTHING;"
         )
 
