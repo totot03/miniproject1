@@ -1,47 +1,14 @@
 import Link from "next/link";
-import { Clock } from "lucide-react";
 
+import { BusinessHours } from "@/components/BusinessHours";
 import { DrugPriceRow } from "@/components/DrugPriceRow";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 import { formatDistance } from "@/lib/format";
-import { cn } from "@/lib/utils";
 import type { components } from "@/types/api";
 
 type PharmacyDetailResponse = components["schemas"]["PharmacyDetailResponse"];
-
-/** docs/API.md §4 businessHours 키 순서 + 한글 라벨. */
-const DAY_LABELS: readonly [key: string, label: string][] = [
-  ["mon", "월"],
-  ["tue", "화"],
-  ["wed", "수"],
-  ["thu", "목"],
-  ["fri", "금"],
-  ["sat", "토"],
-  ["sun", "일"],
-  ["holiday", "공휴일"],
-];
-
-/** Intl "short" 요일 표기(ko-KR)는 DAY_LABELS의 라벨("월","화",...)과 정확히 같은 문자열을 낸다. */
-const KOREAN_WEEKDAY_TO_KEY: Record<string, string> = {
-  월: "mon",
-  화: "tue",
-  수: "wed",
-  목: "thu",
-  금: "fri",
-  토: "sat",
-  일: "sun",
-};
-
-/** 서버 렌더 시점(Asia/Seoul) 기준 오늘의 businessHours 키. 타임존이 어긋나면 "오늘" 강조가 하루 밀릴 수 있어 명시적으로 고정한다. */
-function todayKey(): string {
-  const weekday = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    weekday: "short",
-  }).format(new Date());
-  return KOREAN_WEEKDAY_TO_KEY[weekday] ?? "";
-}
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -112,43 +79,7 @@ export default async function PharmacyDetailPage(
         </div>
 
         {pharmacy.businessHours ? (
-          <div className="bg-muted/30 max-w-xs rounded-lg border p-3 pt-1">
-            <div className="text-muted-foreground flex items-center gap-1.5 pt-2 pb-1.5 text-xs font-semibold">
-              <Clock className="size-3.5" />
-              영업시간
-            </div>
-            <dl className="space-y-0.5 text-xs">
-              {DAY_LABELS.map(([key, label]) => {
-                const hours = pharmacy.businessHours?.[key];
-                const isOpen = hours && hours.length === 2;
-                const isToday = key === todayKey();
-                return (
-                  <div
-                    key={key}
-                    className={cn(
-                      "flex items-center justify-between gap-3 rounded px-1.5 py-1",
-                      isToday && "bg-primary/10",
-                    )}
-                  >
-                    <dt className={cn("font-medium", isToday && "text-primary")}>
-                      {label}
-                      {isToday ? (
-                        <span className="ml-1 text-[10px] font-normal">오늘</span>
-                      ) : null}
-                    </dt>
-                    <dd
-                      className={cn(
-                        "tabular-nums",
-                        isOpen ? "text-foreground" : "text-muted-foreground",
-                      )}
-                    >
-                      {isOpen ? `${hours[0]} ~ ${hours[1]}` : "휴무"}
-                    </dd>
-                  </div>
-                );
-              })}
-            </dl>
-          </div>
+          <BusinessHours businessHours={pharmacy.businessHours} />
         ) : null}
       </div>
 
@@ -169,31 +100,17 @@ export default async function PharmacyDetailPage(
             description="아직 이 약국에 대한 가격 제보가 없습니다."
           />
         ) : (
-          // 컬럼이 5개라 375px에서는 테이블이 카드 폭보다 넓어질 수 있다 —
-          // 페이지 자체가 아니라 이 테이블만 가로로 스크롤되게 한다
-          // (components/charts/RegionStatsTable.tsx와 같은 패턴, docs/ROADMAP.md T-36).
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] border-collapse text-sm">
-              <thead>
-                <tr className="text-muted-foreground border-b text-left text-xs">
-                  <th className="pb-2 font-medium">약품</th>
-                  <th className="pb-2 text-right font-medium">대표가격</th>
-                  <th className="pb-2 text-right font-medium">제보 수</th>
-                  <th className="pb-2 text-right font-medium">최근 갱신</th>
-                  <th className="pb-2 text-right font-medium">전국 평균 대비</th>
-                </tr>
-              </thead>
-              <tbody>
-                {drugPrices.map((drugPrice, index) => (
-                  <DrugPriceRow
-                    key={drugPrice.drugId ?? index}
-                    pharmacyId={pharmacyId}
-                    drugPrice={drugPrice}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          // 카드형 리스트라 컬럼 수와 무관하게 375px에서도 가로 스크롤이
+          // 필요 없다(예전 테이블 레이아웃의 T-36 대응을 대체, DrugPriceRow 참고).
+          <ul className="space-y-2">
+            {drugPrices.map((drugPrice, index) => (
+              <DrugPriceRow
+                key={drugPrice.drugId ?? index}
+                pharmacyId={pharmacyId}
+                drugPrice={drugPrice}
+              />
+            ))}
+          </ul>
         )}
       </div>
     </div>
