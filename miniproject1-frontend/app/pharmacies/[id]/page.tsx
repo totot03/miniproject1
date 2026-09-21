@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Clock } from "lucide-react";
 
 import { DrugPriceRow } from "@/components/DrugPriceRow";
 import { EmptyState } from "@/components/common/EmptyState";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
 import { formatDistance } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { components } from "@/types/api";
 
 type PharmacyDetailResponse = components["schemas"]["PharmacyDetailResponse"];
@@ -20,6 +22,26 @@ const DAY_LABELS: readonly [key: string, label: string][] = [
   ["sun", "일"],
   ["holiday", "공휴일"],
 ];
+
+/** Intl "short" 요일 표기(ko-KR)는 DAY_LABELS의 라벨("월","화",...)과 정확히 같은 문자열을 낸다. */
+const KOREAN_WEEKDAY_TO_KEY: Record<string, string> = {
+  월: "mon",
+  화: "tue",
+  수: "wed",
+  목: "thu",
+  금: "fri",
+  토: "sat",
+  일: "sun",
+};
+
+/** 서버 렌더 시점(Asia/Seoul) 기준 오늘의 businessHours 키. 타임존이 어긋나면 "오늘" 강조가 하루 밀릴 수 있어 명시적으로 고정한다. */
+function todayKey(): string {
+  const weekday = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: "Asia/Seoul",
+    weekday: "short",
+  }).format(new Date());
+  return KOREAN_WEEKDAY_TO_KEY[weekday] ?? "";
+}
 
 function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
@@ -90,17 +112,43 @@ export default async function PharmacyDetailPage(
         </div>
 
         {pharmacy.businessHours ? (
-          <dl className="text-muted-foreground grid grid-cols-4 gap-x-3 gap-y-2 pt-1 text-xs sm:grid-cols-8">
-            {DAY_LABELS.map(([key, label]) => {
-              const hours = pharmacy.businessHours?.[key];
-              return (
-                <div key={key}>
-                  <dt className="font-medium">{label}</dt>
-                  <dd>{hours && hours.length === 2 ? `${hours[0]}~${hours[1]}` : "휴무"}</dd>
-                </div>
-              );
-            })}
-          </dl>
+          <div className="bg-muted/30 max-w-xs rounded-lg border p-3 pt-1">
+            <div className="text-muted-foreground flex items-center gap-1.5 pt-2 pb-1.5 text-xs font-semibold">
+              <Clock className="size-3.5" />
+              영업시간
+            </div>
+            <dl className="space-y-0.5 text-xs">
+              {DAY_LABELS.map(([key, label]) => {
+                const hours = pharmacy.businessHours?.[key];
+                const isOpen = hours && hours.length === 2;
+                const isToday = key === todayKey();
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "flex items-center justify-between gap-3 rounded px-1.5 py-1",
+                      isToday && "bg-primary/10",
+                    )}
+                  >
+                    <dt className={cn("font-medium", isToday && "text-primary")}>
+                      {label}
+                      {isToday ? (
+                        <span className="ml-1 text-[10px] font-normal">오늘</span>
+                      ) : null}
+                    </dt>
+                    <dd
+                      className={cn(
+                        "tabular-nums",
+                        isOpen ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
+                      {isOpen ? `${hours[0]} ~ ${hours[1]}` : "휴무"}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
         ) : null}
       </div>
 
