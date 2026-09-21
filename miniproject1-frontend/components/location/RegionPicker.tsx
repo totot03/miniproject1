@@ -128,7 +128,12 @@ export function RegionPicker({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="시·도" />
               </SelectTrigger>
-              <SelectContent>
+              {/* 기본값인 item-aligned는 선택된 항목을 트리거에 맞춰 정렬하려다
+                  목록이 길 때(경기도 47개 시군구 등) Dialog 안에서 스크롤 위치
+                  계산이 꼬여 부자연스럽다 — 일반적인 드롭다운처럼 트리거
+                  아래에 붙는 popper로 바꿔 스크롤이 항상 위→아래로 자연스럽게
+                  흐르게 한다. */}
+              <SelectContent position="popper">
                 {sidoGroups.map((group) => (
                   <SelectItem key={group.sido} value={group.sido}>
                     {group.sido}
@@ -145,7 +150,7 @@ export function RegionPicker({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="시·군·구" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 {sigungus.map((item) => (
                   <SelectItem
                     key={item.code}
