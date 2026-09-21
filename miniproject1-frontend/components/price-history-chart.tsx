@@ -91,9 +91,9 @@ function ChartTooltip({
   const point = payload[0].payload;
 
   return (
-    <div className="bg-popover text-popover-foreground rounded-md border px-2.5 py-1.5 text-xs shadow-md">
-      <p className="font-medium">{point.purchasedAt}</p>
-      <p>{formatNumber(point.price)}원</p>
+    <div className="bg-popover text-popover-foreground rounded-md border px-3 py-2 text-xs shadow-md">
+      <p className="text-muted-foreground font-medium">{point.purchasedAt.replaceAll("-", ".")}</p>
+      <p className="mt-0.5 text-sm font-semibold tabular-nums">{formatNumber(point.price)}원</p>
       {point.flagged ? (
         <p className="text-muted-foreground mt-0.5">통계에서 제외된 제보</p>
       ) : null}
@@ -171,13 +171,22 @@ export function PriceHistoryChart({ pharmacyId, drugId, isExpanded }: PriceHisto
             width={56}
             domain={["auto", "auto"]}
           />
-          <Tooltip content={<ChartTooltip />} />
+          <Tooltip
+            content={<ChartTooltip />}
+            cursor={{ stroke: "var(--color-border)", strokeDasharray: "3 3" }}
+          />
           <Line
             type="monotone"
             dataKey="price"
             stroke="var(--color-chart-3)"
             strokeWidth={2}
             dot={renderDot}
+            activeDot={{
+              r: 5,
+              fill: "var(--color-chart-3)",
+              stroke: "var(--color-background)",
+              strokeWidth: 2,
+            }}
             isAnimationActive={false}
           />
         </LineChart>
