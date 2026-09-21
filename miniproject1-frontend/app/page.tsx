@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div className="mx-auto max-w-5xl space-y-10 px-4 py-8">
       <section>
-        <h1 className="text-center text-2xl font-bold tracking-tight sm:text-3xl">
+        <h1 className="text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
           내 주변 약국 최저가
         </h1>
       </section>

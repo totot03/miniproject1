@@ -23,10 +23,14 @@ export function SiteHeader() {
             버그 방지). */}
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 font-semibold tracking-tight"
+          className="flex shrink-0 items-center gap-2 font-bold tracking-tight"
         >
-          <Pill aria-hidden="true" className="text-primary size-5" />
-          <span className="text-base sm:text-lg">약값알림</span>
+          <span className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-lg">
+            <Pill aria-hidden="true" className="size-4" />
+          </span>
+          <span className="text-lg sm:text-xl">
+            약값<span className="text-primary">알림</span>
+          </span>
         </Link>
 
         <AuthStatus />

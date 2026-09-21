@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Shield } from "lucide-react";
+import { ClipboardList, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,6 +67,13 @@ export function AuthStatus() {
   return (
     <div className="flex shrink-0 items-center gap-2">
       <AdminModeButton signedIn={true} />
+      {/* AdminModeButton과 같은 이유로 375px에서는 텍스트를 감춘다(T-34). */}
+      <Button asChild size="sm" variant="ghost" aria-label="내 제보 목록">
+        <Link href="/me">
+          <ClipboardList aria-hidden="true" className="size-4" />
+          <span className="hidden sm:inline">내 제보</span>
+        </Link>
+      </Button>
       <span className="text-sm">{user.nickname}님</span>
       <Button
         size="sm"

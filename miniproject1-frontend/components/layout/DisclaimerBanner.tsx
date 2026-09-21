@@ -17,10 +17,10 @@ export function DisclaimerBanner() {
       role="note"
       className="bg-notice text-foreground border-notice-border sticky top-0 z-40 border-b"
     >
-      <p className="mx-auto flex max-w-5xl items-center gap-2 px-4 py-2 text-xs leading-relaxed sm:text-sm">
+      <p className="mx-auto flex max-w-5xl items-center gap-2.5 px-4 py-2.5 text-xs leading-relaxed sm:py-3 sm:text-sm">
         <TriangleAlert
           aria-hidden="true"
-          className="text-stale size-4 shrink-0"
+          className="text-stale size-5 shrink-0"
         />
         <span>
           본 서비스의 가격은 <strong className="font-semibold">학습용 예시 데이터</strong>
